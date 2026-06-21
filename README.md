@@ -1,6 +1,6 @@
 # ComplianceGate
 
-**compliancegate.dev** — governance gap layer between AI-assisted coding and ship.
+**[compliancegate.dev](https://compliancegate.dev)** — governance gap layer between AI-assisted coding and ship.
 
 ComplianceGate records policy decisions, runs pre-commit/pre-push checks, and saves audit data to **your choice of storage**: local SQLite, markdown, or remote Postgres/MySQL.
 

@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" id="top">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ComplianceGate — governance gap layer for AI-assisted code</title>
+  <meta name="description" content="Policy review while you code. Pre-commit and pre-push gates. HIPAA, PII, and PCI rule packs. Audit trail to SQLite, markdown, or your database. Free on GitHub.">
+  <meta name="author" content="Ted Rubin">
+  <meta name="theme-color" content="#0a0908">
+  <link rel="canonical" href="https://compliancegate.dev/">
+  <meta property="og:title" content="ComplianceGate — gate AI code before push">
+  <meta property="og:description" content="Live watch, pre-commit review, pre-push loopback. Modular compliance packs. Local-first audit retention.">
+  <meta property="og:url" content="https://compliancegate.dev/">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://compliancegate.dev/assets/compliancegate-og.png">
+  <meta property="og:image:alt" content="ComplianceGate: three review gates, policy packs, and session audit for AI-assisted code">
+  <meta property="og:image:width" content="1536">
+  <meta property="og:image:height" content="1024">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:image" content="https://compliancegate.dev/assets/compliancegate-og.png">
+  <meta name="twitter:image:alt" content="ComplianceGate: gate AI code before push">
+  <link rel="apple-touch-icon" href="/assets/compliancegate-og.png">
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/compliancegate.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a href="/" class="logo">
+        <span class="logo-mark">CG</span>
+        ComplianceGate
+      </a>
+      <button class="nav-toggle" aria-label="Toggle navigation" id="navToggle">Menu</button>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#pipeline">How it works</a></li>
+        <li><a href="#packs">Rule packs</a></li>
+        <li><a href="#storage">Storage</a></li>
+        <li><a href="#install">Install</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="https://github.com/tedrubin80/compliancegate" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        <li><a href="#install" class="btn btn-primary btn-sm">Install free</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <p class="eyebrow">compliancegate.dev · Gilded Service</p>
+          <h1>Gate AI-assisted code before it reaches git push.</h1>
+          <p class="lead">Live alerts while you type, a pre-commit block on critical findings, and a pre-push loopback of the full session. Decisions land in SQLite, markdown, or Postgres — you pick the retention mode.</p>
+          <div class="hero-actions">
+            <a href="#install" class="btn btn-primary">Install in your repo</a>
+            <a href="https://github.com/tedrubin80/compliancegate" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">View source</a>
+          </div>
+          <p class="hero-compat">Works with <span>Cursor</span> <span>Claude Code</span> <span>Copilot</span> <span>Ollama</span> <span>OpenAI-compatible APIs</span></p>
+        </div>
+
+        <div class="hero-visual">
+          <img
+            src="assets/compliancegate-product-hero.png"
+            alt="ComplianceGate governance layer: Live Watch, pre-commit block, pre-push session audit, and HIPAA, PII, PCI rule packs"
+            class="hero-product-image"
+            width="1672"
+            height="941"
+            loading="eager"
+          >
+          <div class="demo-panel" id="demoPanel">
+            <div class="demo-chrome">
+              <span class="demo-dot"></span>
+              <span class="demo-dot"></span>
+              <span class="demo-dot"></span>
+              <span class="demo-title" id="demoTitle">compliancegate / pre-commit</span>
+            </div>
+            <div class="demo-body" id="demoBody">
+              <div class="demo-tabs" id="demoTabs">
+                <button class="demo-tab active" data-scenario="watch" type="button">Watch</button>
+                <button class="demo-tab" data-scenario="commit" type="button">Commit</button>
+                <button class="demo-tab" data-scenario="push" type="button">Push</button>
+              </div>
+              <div class="severity-legend" aria-label="Severity levels">
+                <span class="legend-item watch">Medium</span>
+                <span class="legend-item concern">High</span>
+                <span class="legend-item blocker">Critical</span>
+              </div>
+              <div id="demoContent"></div>
+              <div class="demo-doc" id="demoDoc"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="problem">
+      <div class="container">
+        <div class="problem-header reveal">
+          <h2>Linters catch syntax.<br>Nobody catches policy.</h2>
+          <p class="lead">AI agents commit fast. PHI in a prompt, a PAN in a diff, an API key in a config file — and it is in git history before a human reviews the PR.</p>
+        </div>
+        <div class="problem-list">
+          <article class="problem-item reveal">
+            <div class="problem-label">No audit trail</div>
+            <p>Chat history is not compliance evidence. You need decisions, severities, and overrides logged where your team can find them.</p>
+          </article>
+          <article class="problem-item reveal">
+            <div class="problem-label">Review too late</div>
+            <p>PR review finds the HIPAA violation after the branch is shared. The gate belongs at commit and push, not at merge.</p>
+          </article>
+          <article class="problem-item reveal">
+            <div class="problem-label">One-size policy docs</div>
+            <p>HIPAA, PCI, and PII need different checks. Enable modular packs instead of a 200-page doc nobody reads.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="pipeline">
+      <div class="container">
+        <div class="section-header center reveal">
+          <h2>Five steps from edit to audit log.</h2>
+        </div>
+        <div class="pipeline reveal">
+          <div class="pipeline-step">
+            <div class="pipeline-icon">01</div>
+            <h3>Edit</h3>
+            <p>AI or human changes land in your working tree.</p>
+          </div>
+          <div class="pipeline-step is-gate">
+            <div class="pipeline-icon">02</div>
+            <h3>Watch</h3>
+            <p>Live alerts on critical and high findings.</p>
+          </div>
+          <div class="pipeline-step is-gate">
+            <div class="pipeline-icon">03</div>
+            <h3>Commit</h3>
+            <p>Hook blocks on critical by default.</p>
+          </div>
+          <div class="pipeline-step is-gate">
+            <div class="pipeline-icon">04</div>
+            <h3>Push</h3>
+            <p>Loopback review of the full session.</p>
+          </div>
+          <div class="pipeline-step">
+            <div class="pipeline-icon">05</div>
+            <h3>Audit</h3>
+            <p>SQLite, markdown, or remote DB.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="layers">
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>Heuristics first. LLM reasoning second.</h2>
+          <p>Pattern scans for secrets, PAN, and PHI run locally even without an API key. When configured, an LLM reviews diffs with redaction before send.</p>
+        </div>
+        <div class="feature-list">
+          <article class="feature-item reveal">
+            <div class="feature-num">01</div>
+            <div>
+              <h3>compliancegate watch</h3>
+              <p>Debounced file watcher flags findings while you code. Surfaces critical and high severity before you stage.</p>
+            </div>
+          </article>
+          <article class="feature-item reveal">
+            <div class="feature-num">02</div>
+            <div>
+              <h3>Pre-commit hook</h3>
+              <p>Reviews staged diff against enabled rule packs. Records allow or block with reasoning. Threshold: <code>block_commit_on: critical</code>.</p>
+            </div>
+          </article>
+          <article class="feature-item reveal">
+            <div class="feature-num">03</div>
+            <div>
+              <h3>Pre-push loopback</h3>
+              <p>Re-reviews accumulated session context before code leaves your machine. Threshold: <code>block_push_on: high</code>.</p>
+              <div class="code-block"><span class="comment">&gt;</span> compliancegate loopback<br><span class="comment">ok</span> 4 reviews · 2 decisions · verdict fail<br><span class="comment">-&gt;</span> PUSH BLOCKED</div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="packs">
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>Enable HIPAA, PII, or PCI only when scope applies.</h2>
+          <p>Each pack ships rules and heuristic patterns. Sensitive packs default to local-first retention.</p>
+        </div>
+        <div class="pack-grid">
+          <article class="pack-card reveal">
+            <div class="pack-head">
+              <h3>Base</h3>
+              <span class="pack-badge">Safe</span>
+            </div>
+            <div class="pack-frameworks">
+              <span class="framework-tag">SOC2</span>
+              <span class="framework-tag">Secrets</span>
+            </div>
+            <p>Hardcoded credentials, auth changes, dependency risk. Enable in every repo.</p>
+            <ul>
+              <li>API key and token patterns</li>
+              <li>eval/exec and SSL bypass</li>
+            </ul>
+          </article>
+          <article class="pack-card is-sensitive reveal">
+            <div class="pack-head">
+              <h3>PII</h3>
+              <span class="pack-badge sensitive">Sensitive</span>
+            </div>
+            <div class="pack-frameworks">
+              <span class="framework-tag">GDPR</span>
+              <span class="framework-tag">CCPA</span>
+            </div>
+            <p>Personal data in logs, storage, and source. Local retention recommended.</p>
+            <ul>
+              <li>SSN and email patterns</li>
+              <li>Cookie and tracking changes</li>
+            </ul>
+          </article>
+          <article class="pack-card is-sensitive reveal">
+            <div class="pack-head">
+              <h3>HIPAA</h3>
+              <span class="pack-badge sensitive">Sensitive</span>
+            </div>
+            <div class="pack-frameworks">
+              <span class="framework-tag">PHI</span>
+              <span class="framework-tag">BAA</span>
+            </div>
+            <p>PHI in logs, prompts, and external LLM routing. Healthcare scope only.</p>
+            <ul>
+              <li>Clinical field references</li>
+              <li>PHI sent to third-party APIs</li>
+            </ul>
+          </article>
+          <article class="pack-card is-sensitive reveal">
+            <div class="pack-head">
+              <h3>PCI</h3>
+              <span class="pack-badge sensitive">Sensitive</span>
+            </div>
+            <div class="pack-frameworks">
+              <span class="framework-tag">PCI-DSS</span>
+              <span class="framework-tag">CDE</span>
+            </div>
+            <p>Cardholder data never stored or logged. Never synced raw to remote DB.</p>
+            <ul>
+              <li>PAN and CVV patterns</li>
+              <li>Track data detection</li>
+            </ul>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="sample">
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>What a session report looks like.</h2>
+          <p>Markdown audit trails written to <code>.compliancegate/reports/</code> — not chat filler.</p>
+        </div>
+        <details class="sample-output reveal">
+          <summary>View sample session markdown</summary>
+          <div class="code-block sample-block">
+            <strong># Compliance Session Report — billing-api</strong><br><br>
+            <strong>## Findings</strong><br>
+            <strong>### [CRITICAL] Possible payment card number (PAN)</strong><br>
+            Pattern matched in added lines · framework: PCI-DSS<br>
+            Recommendation: Remove PAN from source; use tokenization provider.<br><br>
+            <strong>## Decisions</strong><br>
+            <strong>### pre-commit → block</strong><br>
+            1 files, heuristic + LLM review · verdict fail<br><br>
+            <strong>## Review Log</strong><br>
+            - watch:billing/checkout.ts — verdict warn<br>
+            - pre-commit — verdict fail — BLOCK
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="section" id="storage">
+      <div class="container">
+        <div class="section-header center reveal">
+          <h2>Pick where audit data lives.</h2>
+          <p>Set <code>storage.mode</code> in config.yaml. One switch, five destinations.</p>
+        </div>
+        <div class="storage-grid reveal">
+          <article class="storage-card">
+            <p class="storage-mode">sqlite</p>
+            <h3>Local database</h3>
+            <p>Full detail in <code>.compliancegate/data/compliancegate.db</code>. Sessions, decisions, findings, raw review context.</p>
+          </article>
+          <article class="storage-card featured">
+            <p class="storage-mode">sqlite_markdown</p>
+            <h3>Database + reports</h3>
+            <p>Default mode. SQLite plus session and daily markdown rollups for human-readable audit trails.</p>
+          </article>
+          <article class="storage-card">
+            <p class="storage-mode">remote</p>
+            <h3>Postgres / MySQL</h3>
+            <p>Mirror metadata to your infrastructure. Sanitized by default — no diff prose or raw findings.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="trust">
+      <div class="container">
+        <div class="section-header center reveal">
+          <h2>Compliance review content is sensitive. Treat it that way.</h2>
+        </div>
+        <div class="trust-panel reveal">
+          <div class="trust-col local">
+            <h3>Stays local</h3>
+            <ul>
+              <li>Full diff summaries and finding descriptions</li>
+              <li>LLM reasoning and raw responses</li>
+              <li>File paths and line hints</li>
+              <li>Session markdown with full detail</li>
+            </ul>
+          </div>
+          <div class="trust-col remote">
+            <h3>Remote sync (optional)</h3>
+            <ul>
+              <li>Verdict, severity, framework tags only</li>
+              <li>Hashed descriptions — not prose</li>
+              <li>Basenames — not full paths</li>
+              <li><code>remote_payload: metadata_only</code> by default</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="commands">
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>Commands mapped to the workflow.</h2>
+        </div>
+        <div class="command-grid" id="commandGrid"></div>
+        <div class="command-detail reveal" id="commandDetail">
+          <h4>compliancegate init</h4>
+          <p>Install git hooks, scaffold config.yaml, and create storage directories for your chosen mode.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="install">
+      <div class="container">
+        <div class="section-header center reveal">
+          <h2>How do I install ComplianceGate?</h2>
+          <p class="lead">Install script, manual pip, or clone into an existing repo. Hooks run on every commit and push.</p>
+        </div>
+        <div class="install-grid">
+          <article class="install-card reveal">
+            <h3>Install script</h3>
+            <p>Creates venv, copies config, installs hooks, sets storage mode.</p>
+            <div class="install-row">
+              <code class="install-cmd" id="cmdInstall">git clone https://github.com/tedrubin80/compliancegate.git &amp;&amp; cd compliancegate &amp;&amp; bash scripts/install.sh --repo /path/to/your/project</code>
+              <button class="copy-btn" type="button" data-copy="cmdInstall">Copy</button>
+            </div>
+          </article>
+          <article class="install-card reveal">
+            <h3>Manual pip install</h3>
+            <div class="install-row">
+              <code class="install-cmd" id="cmdPip">pip install -e /path/to/compliancegate &amp;&amp; compliancegate init --mode sqlite_markdown</code>
+              <button class="copy-btn" type="button" data-copy="cmdPip">Copy</button>
+            </div>
+            <div class="install-row">
+              <code class="install-cmd" id="cmdWatch">compliancegate watch</code>
+              <button class="copy-btn" type="button" data-copy="cmdWatch">Copy</button>
+            </div>
+          </article>
+          <article class="install-card reveal">
+            <h3>Rule packs</h3>
+            <p>Edit <code>config.yaml</code> after init:</p>
+            <div class="install-row">
+              <code class="install-cmd" id="cmdPacks">compliancegate rules list</code>
+              <button class="copy-btn" type="button" data-copy="cmdPacks">Copy</button>
+            </div>
+            <p class="install-card-note">Enable <code>pii</code>, <code>hipaa</code>, <code>pci</code> under <code>compliance.rule_packs</code>.</p>
+          </article>
+          <article class="install-card reveal">
+            <h3>Remote retention</h3>
+            <div class="install-row">
+              <code class="install-cmd" id="cmdRemote">pip install 'compliancegate[postgres,mysql]'</code>
+              <button class="copy-btn" type="button" data-copy="cmdRemote">Copy</button>
+            </div>
+            <p class="install-card-note">Set <code>CG_POSTGRES_URL</code> and <code>storage.mode: remote</code>.</p>
+          </article>
+          <article class="install-card reveal">
+            <h3>Emergency bypass</h3>
+            <p>Logged when storage is enabled. Use sparingly.</p>
+            <div class="install-row">
+              <code class="install-cmd" id="cmdSkip">CG_SKIP=1 git commit -m "hotfix"</code>
+              <button class="copy-btn" type="button" data-copy="cmdSkip">Copy</button>
+            </div>
+          </article>
+        </div>
+        <p class="install-note reveal">Set <code>OPENAI_API_KEY</code> or configure Ollama in config.yaml. Alias: <code>cg</code> instead of <code>compliancegate</code>.</p>
+      </div>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="container">
+        <div class="section-header center reveal">
+          <h2>Common questions about ComplianceGate.</h2>
+        </div>
+        <div class="faq-list">
+          <details class="faq-item reveal" open>
+            <summary>What is ComplianceGate?</summary>
+            <p>A governance gap layer for AI-assisted development. It watches file changes, gates commit and push with policy review, and writes an audit trail to storage you control.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>Do I need an LLM API key?</summary>
+            <p>No for basic use. Heuristic pattern scanning runs locally. Configure OpenAI or Ollama for LLM reasoning review on diffs. Diffs are redacted before external send when <code>redact_before_send: true</code>.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>Does sensitive data leave my machine?</summary>
+            <p>Not by default. Remote Postgres/MySQL sync uses metadata-only payloads. Full finding detail stays in local SQLite or markdown unless you explicitly change retention settings.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>Is ComplianceGate free?</summary>
+            <p>Yes. Open source on <a href="https://github.com/tedrubin80/compliancegate">GitHub</a>. You provide your own LLM API key if you want LLM review.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="cta-band reveal">
+          <h2>Install the gate before the next push.</h2>
+          <p class="lead">Five minutes to hooks, config, and your first reviewed commit.</p>
+          <div class="cta-actions">
+            <a href="#install" class="btn btn-primary">Install ComplianceGate</a>
+            <a href="https://github.com/tedrubin80/compliancegate" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">Star on GitHub</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-grid">
+        <div class="footer-brand">
+          <a href="/" class="logo"><span class="logo-mark">CG</span> ComplianceGate</a>
+          <p>Governance gap layer for AI-assisted code. Gate commit. Gate push. Keep the trail.</p>
+          <p class="footer-family">Part of the <a href="https://pmbutler.dev" target="_blank" rel="noopener noreferrer">Gilded Service</a> family. PM Butler runs discovery through launch; ComplianceGate gates the code.</p>
+        </div>
+        <div class="footer-col">
+          <h4>Product</h4>
+          <ul>
+            <li><a href="#pipeline">How it works</a></li>
+            <li><a href="#packs">Rule packs</a></li>
+            <li><a href="#storage">Storage</a></li>
+            <li><a href="#install">Install</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>Connect</h4>
+          <ul>
+            <li><a href="https://github.com/tedrubin80/compliancegate" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a href="https://pmbutler.dev" target="_blank" rel="noopener noreferrer">PM Butler</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <span>ComplianceGate · Gilded Service</span>
+        <span>Free on <a href="https://github.com/tedrubin80/compliancegate" target="_blank" rel="noopener noreferrer">GitHub</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js" defer></script>
+</body>
+</html>
