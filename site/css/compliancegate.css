@@ -273,6 +273,75 @@
   color: var(--muted);
 }
 
+/* LLM routing */
+
+.llm-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-md);
+}
+
+.llm-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: var(--space-lg);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  transition: border-color 0.25s var(--ease-out);
+}
+
+.llm-card:hover {
+  border-color: var(--border-strong);
+}
+
+.llm-card.featured {
+  border-color: var(--border-strong);
+  background: linear-gradient(165deg, rgba(196, 160, 82, 0.06), var(--surface));
+}
+
+.llm-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin: 0;
+}
+
+.llm-card h3 {
+  font-size: 1.35rem;
+  margin: 0;
+}
+
+.llm-card p {
+  color: var(--muted);
+  font-size: 0.9375rem;
+  margin: 0;
+}
+
+.llm-card a {
+  color: var(--gold-dim);
+}
+
+.llm-snippet {
+  margin-top: auto;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.llm-cmd {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  color: var(--muted-dark);
+  margin: 0;
+}
+
+.llm-cmd code {
+  color: var(--gold-dim);
+}
+
 /* Storage selector */
 
 .storage-grid {
@@ -417,7 +486,8 @@
   }
   .pipeline::before { display: none; }
   .storage-grid,
-  .trust-panel {
+  .trust-panel,
+  .llm-grid {
     grid-template-columns: 1fr;
   }
   .trust-col + .trust-col {

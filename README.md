@@ -18,7 +18,12 @@ Or clone and use the install script:
 bash scripts/install.sh --repo /path/to/your/project --mode sqlite_markdown
 ```
 
-See [`npm/README.md`](npm/README.md) for the npx wrapper (scaffold — not yet on npm registry).
+See [`npm/README.md`](npm/README.md) for the full npx command reference.
+
+```bash
+npx compliancegate install
+npx compliancegate skills install --all-skills --all
+```
 
 ## CLI
 

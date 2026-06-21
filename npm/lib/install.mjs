@@ -1,6 +1,7 @@
 import { existsSync } from "fs";
 import { join, resolve } from "path";
 import { updateRulePacks } from "./config.mjs";
+import { installSkill } from "./skills.mjs";
 import {
   cgBinary,
   findPython,
@@ -84,6 +85,17 @@ export function installComplianceGate(options = {}) {
   if (existsSync(configPath)) {
     updateRulePacks(configPath, packs);
     console.log(`==> Updated rule_packs in ${configPath}`);
+  }
+
+  try {
+    const skillDest = installSkill(
+      "compliancegate",
+      "project",
+      join(repo, ".cursor", "skills", "compliancegate"),
+    );
+    console.log(`==> Agent skill → ${skillDest}`);
+  } catch (err) {
+    console.warn(`==> Agent skill skipped: ${err.message}`);
   }
 
   console.log("\n==> Done");

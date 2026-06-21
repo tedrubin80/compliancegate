@@ -29,13 +29,14 @@ const demoScenarios = {
 };
 
 const commands = {
-  init: { title: "compliancegate init", desc: "Install hooks, create config.yaml, and scaffold storage for your mode." },
+  npx: { title: "npx compliancegate install", desc: "Install venv, hooks, config, and the compliancegate agent skill into your repo." },
+  skills: { title: "npx compliancegate skills install --all-skills", desc: "Install compliancegate + compliance-review skills for Cursor and Claude." },
+  llm: { title: "compliancegate llm route", desc: "Show OpenRouter or OpenAI route, LangChain pipeline, and API key status." },
   watch: { title: "compliancegate watch", desc: "Live file watcher with debounced compliance alerts." },
   review: { title: "compliancegate review", desc: "On-demand review of current git diff." },
   rules: { title: "compliancegate rules show hipaa", desc: "Inspect rules and patterns for a pack before enabling." },
   status: { title: "compliancegate status", desc: "Storage mode, active session, unresolved findings." },
-  sync: { title: "compliancegate sync-db", desc: "Push sanitized metadata to Postgres or MySQL." },
-  end: { title: "compliancegate end-session", desc: "Close session and write final markdown reports." }
+  sync: { title: "compliancegate sync-db", desc: "Push sanitized metadata to Postgres or MySQL." }
 };
 
 const levelTag = { watch: "MEDIUM", concern: "HIGH", blocker: "CRITICAL" };

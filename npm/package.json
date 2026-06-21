@@ -6,9 +6,15 @@
   "bin": {
     "compliancegate": "bin/compliancegate.js"
   },
+  "scripts": {
+    "prepublishOnly": "node scripts/sync-skills.mjs",
+    "sync-skills": "node scripts/sync-skills.mjs"
+  },
   "files": [
     "bin",
     "lib",
+    "scripts",
+    "skills",
     "README.md",
     "LICENSE"
   ],

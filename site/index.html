@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ComplianceGate — governance gap layer for AI-assisted code</title>
-  <meta name="description" content="Policy review while you code. Pre-commit and pre-push gates. HIPAA, PII, and PCI rule packs. Audit trail to SQLite, markdown, or your database. Free on GitHub.">
+  <meta name="description" content="Pre-commit and pre-push compliance gates for AI-assisted code. Rule packs for HIPAA, PII, PCI. OpenRouter and LangChain routing. Agent skills for Cursor and Claude. Free on GitHub and npm.">
   <meta name="author" content="Ted Rubin">
   <meta name="theme-color" content="#0a0908">
   <link rel="canonical" href="https://compliancegate.dev/">
   <meta property="og:title" content="ComplianceGate — gate AI code before push">
-  <meta property="og:description" content="Live watch, pre-commit review, pre-push loopback. Modular compliance packs. Local-first audit retention.">
+  <meta property="og:description" content="Gate commit and push with rule packs, OpenRouter LLM routing, optional LangChain pipeline, and Cursor agent skills. Local-first audit retention.">
   <meta property="og:url" content="https://compliancegate.dev/">
   <meta property="og:type" content="website">
   <meta property="og:image" content="https://compliancegate.dev/assets/compliancegate-og.png">
@@ -36,7 +36,8 @@
       </a>
       <button class="nav-toggle" aria-label="Toggle navigation" id="navToggle">Menu</button>
       <ul class="nav-links" id="navLinks">
-        <li><a href="#pipeline">How it works</a></li>
+        <li><a href="#layers">Review layers</a></li>
+        <li><a href="#llm">LLM routing</a></li>
         <li><a href="#packs">Rule packs</a></li>
         <li><a href="#storage">Storage</a></li>
         <li><a href="#install">Install</a></li>
@@ -58,7 +59,7 @@
             <a href="#install" class="btn btn-primary">Install in your repo</a>
             <a href="https://github.com/tedrubin80/compliancegate" class="btn btn-ghost" target="_blank" rel="noopener noreferrer">View source</a>
           </div>
-          <p class="hero-compat">Works with <span>Cursor</span> <span>Claude Code</span> <span>Copilot</span> <span>Ollama</span> <span>OpenAI-compatible APIs</span></p>
+          <p class="hero-compat">Works with <span>Cursor</span> <span>Claude Code</span> <span>Copilot</span> <span>OpenRouter</span> <span>Ollama</span></p>
         </div>
 
         <div class="hero-visual">
@@ -182,6 +183,70 @@
               <p>Re-reviews accumulated session context before code leaves your machine. Threshold: <code>block_push_on: high</code>.</p>
               <div class="code-block"><span class="comment">&gt;</span> compliancegate loopback<br><span class="comment">ok</span> 4 reviews · 2 decisions · verdict fail<br><span class="comment">-&gt;</span> PUSH BLOCKED</div>
             </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="llm">
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>OpenRouter, LangChain, and agent skills.</h2>
+          <p>Heuristics always run locally. Add LLM reasoning via OpenRouter, optional two-stage LangChain review, and Cursor/Claude skills that speak the CLI.</p>
+        </div>
+        <div class="llm-grid reveal">
+          <article class="llm-card">
+            <p class="llm-label">OpenRouter</p>
+            <h3>One key, many models</h3>
+            <p>Route reviews through <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">OpenRouter</a> with model fallbacks. Diffs redacted before send.</p>
+            <div class="code-block llm-snippet">provider: openrouter<br>model: anthropic/claude-3.5-sonnet<br>fallback_models: [openai/gpt-4o-mini]</div>
+            <p class="llm-cmd"><code>compliancegate llm route</code> · <code>llm test</code></p>
+          </article>
+          <article class="llm-card featured">
+            <p class="llm-label">LangChain</p>
+            <h3>Reasoning → analytical</h3>
+            <p>Optional pipeline: a reasoning model analyzes diffs against enabled packs; an analytical model produces structured audit JSON.</p>
+            <div class="code-block llm-snippet">pip install 'compliancegate[langchain]'<br>langchain.enabled: true</div>
+            <p class="llm-cmd"><code>reasoning</code> → <code>analytical</code> → findings</p>
+          </article>
+          <article class="llm-card">
+            <p class="llm-label">Agent skills</p>
+            <h3>Cursor &amp; Claude</h3>
+            <p><code>compliancegate</code> skill for hooked repos. <code>compliance-review</code> for standalone in-chat review without install.</p>
+            <div class="code-block llm-snippet">npx compliancegate skills install --all-skills --all<br>npx compliancegate skills install --project</div>
+            <p class="llm-cmd">Installed automatically by <code>npx compliancegate install</code></p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="llm">
+      <div class="container">
+        <div class="section-header reveal">
+          <h2>OpenRouter, LangChain, and agent skills.</h2>
+          <p>Heuristics always run locally. Add LLM reasoning via OpenRouter, optional two-stage LangChain review, and Cursor/Claude skills that speak the CLI.</p>
+        </div>
+        <div class="llm-grid reveal">
+          <article class="llm-card">
+            <p class="llm-label">OpenRouter</p>
+            <h3>One key, many models</h3>
+            <p>Route reviews through <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">OpenRouter</a> with model fallbacks. Diffs redacted before send.</p>
+            <div class="code-block llm-snippet">provider: openrouter<br>model: anthropic/claude-3.5-sonnet<br>fallback_models: [openai/gpt-4o-mini]</div>
+            <p class="llm-cmd"><code>compliancegate llm route</code> · <code>llm test</code></p>
+          </article>
+          <article class="llm-card featured">
+            <p class="llm-label">LangChain</p>
+            <h3>Reasoning → analytical</h3>
+            <p>Optional pipeline: a reasoning model analyzes diffs against enabled packs; an analytical model produces structured audit JSON.</p>
+            <div class="code-block llm-snippet">pip install 'compliancegate[langchain]'<br>langchain.enabled: true</div>
+            <p class="llm-cmd"><code>reasoning</code> → <code>analytical</code> → findings</p>
+          </article>
+          <article class="llm-card">
+            <p class="llm-label">Agent skills</p>
+            <h3>Cursor &amp; Claude</h3>
+            <p><code>compliancegate</code> skill for hooked repos. <code>compliance-review</code> for standalone in-chat review without install.</p>
+            <div class="code-block llm-snippet">npx compliancegate skills install --all-skills --all<br>npx compliancegate skills install --project</div>
+            <p class="llm-cmd">Installed automatically by <code>npx compliancegate install</code></p>
           </article>
         </div>
       </div>
@@ -466,7 +531,19 @@
               <code class="install-cmd" id="cmdNpxCheck">npx compliancegate check</code>
               <button class="copy-btn" type="button" data-copy="cmdNpxCheck">Copy</button>
             </div>
-            <p class="install-card-note">Requires Node 18+ and Python 3.10+. Package scaffold — publish pending.</p>
+            <p class="install-card-note">Node 18+ and Python 3.10+. Installs hooks, config, venv, and the <code>compliancegate</code> agent skill.</p>
+          </article>
+          <article class="install-card reveal">
+            <h3>OpenRouter + LangChain</h3>
+            <p>After install, set LLM routing in <code>config.yaml</code>.</p>
+            <div class="install-row">
+              <code class="install-cmd" id="cmdOpenRouter">compliancegate llm route</code>
+              <button class="copy-btn" type="button" data-copy="cmdOpenRouter">Copy</button>
+            </div>
+            <div class="install-row">
+              <code class="install-cmd" id="cmdLangchain">pip install 'compliancegate[langchain]'</code>
+              <button class="copy-btn" type="button" data-copy="cmdLangchain">Copy</button>
+            </div>
           </article>
           <article class="install-card reveal">
             <h3>Install script</h3>
@@ -545,6 +622,14 @@
             <p>Set <code>provider: openrouter</code> and <code>OPENROUTER_API_KEY</code> in config. Pick any OpenRouter model id (e.g. <code>anthropic/claude-3.5-sonnet</code>), optional <code>fallback_models</code> for automatic failover. Run <code>compliancegate llm test</code> to verify the route.</p>
           </details>
           <details class="faq-item reveal">
+            <summary>What is the LangChain pipeline?</summary>
+            <p>Optional two-stage review: a <strong>reasoning</strong> model (e.g. Claude via OpenRouter) analyzes diffs against your enabled packs, then an <strong>analytical</strong> model produces structured findings JSON. Enable with <code>langchain.enabled: true</code> after <code>pip install 'compliancegate[langchain]'</code>.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>How do agent skills work?</summary>
+            <p>Two skills ship in the repo: <code>compliancegate</code> (CLI + hooks) and <code>compliance-review</code> (standalone). Run <code>npx compliancegate skills install --all-skills --all</code> for Cursor and Claude, or let <code>npx compliancegate install</code> copy the CG skill into your repo.</p>
+          </details>
+          <details class="faq-item reveal">
             <summary>Does sensitive data leave my machine?</summary>
             <p>Not by default. Remote Postgres/MySQL sync uses metadata-only payloads. Full finding detail stays in local SQLite or markdown unless you explicitly change retention settings.</p>
           </details>
@@ -582,22 +667,25 @@
           <h4>Product</h4>
           <ul>
             <li><a href="#pipeline">How it works</a></li>
+            <li><a href="#llm">LLM routing</a></li>
             <li><a href="#packs">Rule packs</a></li>
             <li><a href="#storage">Storage</a></li>
             <li><a href="#install">Install</a></li>
+            <li><a href="https://www.npmjs.com/package/compliancegate" target="_blank" rel="noopener noreferrer">npm</a></li>
           </ul>
         </div>
         <div class="footer-col">
           <h4>Connect</h4>
           <ul>
             <li><a href="https://github.com/tedrubin80/compliancegate" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <li><a href="https://www.npmjs.com/package/compliancegate" target="_blank" rel="noopener noreferrer">npm</a></li>
             <li><a href="https://pmbutler.dev" target="_blank" rel="noopener noreferrer">PM Butler</a></li>
           </ul>
         </div>
       </div>
       <div class="footer-bottom">
         <span>ComplianceGate · Gilded Service</span>
-        <span>Free on <a href="https://github.com/tedrubin80/compliancegate" target="_blank" rel="noopener noreferrer">GitHub</a></span>
+        <span>Free on <a href="https://github.com/tedrubin80/compliancegate" target="_blank" rel="noopener noreferrer">GitHub</a> · <a href="https://www.npmjs.com/package/compliancegate" target="_blank" rel="noopener noreferrer">npm</a></span>
       </div>
     </div>
   </footer>
