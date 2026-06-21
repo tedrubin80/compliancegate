@@ -1,0 +1,65 @@
+# Copy to config.yaml and adjust for your environment.
+
+project:
+  name: "my-project"
+  repo_root: "."  # relative to config file location
+
+storage:
+  # Local SQLite database for long-term decision/compliance retention
+  sqlite_path: ".compliance/data/compliance.db"
+  # Daily and session markdown audit trails
+  markdown_dir: ".compliance/reports"
+
+llm:
+  # provider: openai | ollama | custom
+  provider: openai
+  # OpenAI-compatible endpoint (works with OpenAI, Azure, local proxies)
+  api_url: "https://api.openai.com/v1/chat/completions"
+  api_key_env: "OPENAI_API_KEY"
+  model: "gpt-4o-mini"
+  # Ollama settings (when provider: ollama)
+  ollama_url: "http://localhost:11434/api/chat"
+  ollama_model: "llama3.2"
+  timeout_seconds: 120
+
+compliance:
+  # Frameworks/rules the reviewer should check against
+  frameworks:
+    - "SOC2"
+    - "GDPR"
+    - "internal-security-policy"
+  # Severity threshold to block push (critical, high, medium, low)
+  block_push_on: "high"
+  # Severity threshold to block commit
+  block_commit_on: "critical"
+  custom_rules:
+    - "No hardcoded secrets, API keys, or credentials in source"
+    - "No PII logged to stdout or error handlers"
+    - "Auth changes require explicit review note"
+
+watch:
+  enabled: true
+  # Debounce file change alerts (seconds)
+  debounce_seconds: 3
+  ignore_patterns:
+    - "**/.git/**"
+    - "**/node_modules/**"
+    - "**/__pycache__/**"
+    - "**/.compliance/**"
+    - "**/venv/**"
+    - "**/.venv/**"
+
+reporting:
+  # write session markdown on each review + daily rollup at midnight
+  session_markdown: true
+  daily_markdown: true
+
+# Optional remote retention (SQLite remains local source of truth)
+retention:
+  sync_on_review: true   # mirror to remote DB after each review
+  postgres:
+    enabled: false
+    url_env: CRH_POSTGRES_URL   # postgresql://user:pass@host:5432/compliance
+  mysql:
+    enabled: false
+    url_env: CRH_MYSQL_URL      # mysql://user:pass@host:3306/compliance
