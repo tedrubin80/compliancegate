@@ -12,6 +12,7 @@ storage:
   markdown_dir: ".compliancegate/reports"
 
 llm:
+  # provider: openai | openrouter | ollama
   provider: openai
   api_url: "https://api.openai.com/v1/chat/completions"
   api_key_env: "OPENAI_API_KEY"
@@ -20,6 +21,28 @@ llm:
   ollama_model: "llama3.2"
   timeout_seconds: 120
   redact_before_send: true
+  json_mode: true
+
+  # --- OpenRouter (unified model routing) ---
+  # provider: openrouter
+  # api_key_env: OPENROUTER_API_KEY
+  # model: anthropic/claude-3.5-sonnet
+  # fallback_models:
+  #   - openai/gpt-4o-mini
+  #   - google/gemini-2.0-flash-001
+  # site_url: https://compliancegate.dev
+  # app_title: ComplianceGate
+
+# Optional two-stage LangChain pipeline: reasoning model → analytical model
+# Requires: pip install 'compliancegate[langchain]'
+langchain:
+  enabled: false
+  reasoning:
+    model: anthropic/claude-3.5-sonnet   # best reasoning layer (OpenRouter id)
+    temperature: 0.3
+  analytical:
+    model: openai/gpt-4o-mini            # best structured analytical layer
+    temperature: 0.1
 
 compliance:
   rule_packs:

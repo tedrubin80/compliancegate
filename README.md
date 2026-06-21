@@ -57,6 +57,60 @@ compliance:
   rule_packs: [base, pii, hipaa, pci]
 ```
 
+## LLM routing (OpenRouter)
+
+Route reviews through [OpenRouter](https://openrouter.ai) for model choice, fallbacks, and one API key:
+
+```yaml
+llm:
+  provider: openrouter
+  api_key_env: OPENROUTER_API_KEY
+  model: anthropic/claude-3.5-sonnet
+  fallback_models:
+    - openai/gpt-4o-mini
+  redact_before_send: true
+```
+
+```bash
+export OPENROUTER_API_KEY=sk-or-...
+compliancegate llm route
+compliancegate llm test
+compliancegate llm models --filter claude --limit 10
+```
+
+Defaults when `provider: openrouter`: endpoint `https://openrouter.ai/api/v1/chat/completions`, attribution headers for compliancegate.dev.
+
+## LangChain pipeline (optional)
+
+Two-stage review: **reasoning model** analyzes diffs against enabled rule packs, then **analytical model** produces structured findings JSON.
+
+```bash
+pip install 'compliancegate[langchain]'
+```
+
+```yaml
+llm:
+  provider: openrouter
+  api_key_env: OPENROUTER_API_KEY
+  redact_before_send: true
+
+langchain:
+  enabled: true
+  reasoning:
+    model: anthropic/claude-3.5-sonnet
+    temperature: 0.3
+  analytical:
+    model: openai/gpt-4o-mini
+    temperature: 0.1
+```
+
+```bash
+compliancegate llm route
+compliancegate llm test
+```
+
+Pack rules are injected into the reasoning pass; the analytical pass converts reasoning into audit-ready findings without inventing new issues.
+
 ## Remote database (optional)
 
 ```bash

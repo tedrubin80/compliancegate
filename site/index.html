@@ -513,7 +513,7 @@
             </div>
           </article>
         </div>
-        <p class="install-note reveal">Set <code>OPENAI_API_KEY</code> or configure Ollama in config.yaml. Alias: <code>cg</code> instead of <code>compliancegate</code>.</p>
+        <p class="install-note reveal">LLM review: set <code>OPENROUTER_API_KEY</code> with <code>provider: openrouter</code>, or <code>OPENAI_API_KEY</code> / Ollama. Run <code>compliancegate llm route</code> to inspect. Alias: <code>cg</code>.</p>
       </div>
     </section>
 
@@ -529,7 +529,11 @@
           </details>
           <details class="faq-item reveal">
             <summary>Do I need an LLM API key?</summary>
-            <p>No for basic use. Heuristic pattern scanning runs locally. Configure OpenAI or Ollama for LLM reasoning review on diffs. Diffs are redacted before external send when <code>redact_before_send: true</code>.</p>
+            <p>No for basic use. Heuristic pattern scanning runs locally. For LLM review, use OpenAI, <a href="https://openrouter.ai" target="_blank" rel="noopener noreferrer">OpenRouter</a> (recommended — one key, many models), or Ollama. Diffs are redacted before external send when <code>redact_before_send: true</code>.</p>
+          </details>
+          <details class="faq-item reveal">
+            <summary>How do I route through OpenRouter?</summary>
+            <p>Set <code>provider: openrouter</code> and <code>OPENROUTER_API_KEY</code> in config. Pick any OpenRouter model id (e.g. <code>anthropic/claude-3.5-sonnet</code>), optional <code>fallback_models</code> for automatic failover. Run <code>compliancegate llm test</code> to verify the route.</p>
           </details>
           <details class="faq-item reveal">
             <summary>Does sensitive data leave my machine?</summary>

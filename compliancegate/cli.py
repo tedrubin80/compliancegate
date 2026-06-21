@@ -107,6 +107,110 @@ def rules_show(pack_id: str, config_path: str | None):
             click.echo(f"  - [{p.severity}] {p.title} ({p.category})")
 
 
+@main.group("llm")
+def llm_group():
+    """Test and inspect LLM provider routing (OpenAI, OpenRouter, Ollama)."""
+    pass
+
+
+@llm_group.command("route")
+@click.option("--config", "config_path", type=click.Path(exists=True), default=None)
+def llm_route(config_path: str | None):
+    """Show the active LLM route and env var requirements."""
+    from compliancegate.config import get_api_key
+    from compliancegate.langchain_pipeline import describe_langchain_pipeline, is_langchain_available
+
+    cfg = load_config(Path(config_path) if config_path else None)
+    llm = cfg.llm
+    key_set = bool(get_api_key(cfg))
+
+    click.echo(f"Provider:    {llm.provider}")
+    click.echo(f"Pipeline:    {describe_langchain_pipeline(cfg)}")
+    if cfg.langchain.enabled:
+        deps = "installed" if is_langchain_available() else "missing — pip install 'compliancegate[langchain]'"
+        click.echo(f"LangChain:   {deps}")
+        click.echo(f"  Reasoning: {cfg.langchain.reasoning.model} (temp {cfg.langchain.reasoning.temperature})")
+        click.echo(f"  Analytical:{cfg.langchain.analytical.model} (temp {cfg.langchain.analytical.temperature})")
+    click.echo(f"Endpoint:    {llm.api_url}")
+    click.echo(f"Model:       {llm.model}")
+    if llm.fallback_models:
+        click.echo(f"Fallbacks:   {', '.join(llm.fallback_models)}")
+    click.echo(f"API key env: {llm.api_key_env} ({'set' if key_set else 'missing'})")
+    click.echo(f"JSON mode:   {llm.json_mode}")
+    click.echo(f"Redact:      {llm.redact_before_send}")
+    if llm.provider == "openrouter":
+        click.echo(f"Referer:     {llm.site_url}")
+        click.echo(f"App title:   {llm.app_title}")
+    elif llm.provider == "ollama":
+        click.echo(f"Ollama URL:  {llm.ollama_url}")
+        click.echo(f"Ollama model:{llm.ollama_model}")
+
+
+@llm_group.command("test")
+@click.option("--config", "config_path", type=click.Path(exists=True), default=None)
+def llm_test(config_path: str | None):
+    """Probe the configured LLM route with a minimal JSON request."""
+    from compliancegate.llm import LLMClient
+
+    cfg = load_config(Path(config_path) if config_path else None)
+    client = LLMClient(cfg)
+    result = client.probe()
+
+    click.echo(f"Provider:  {cfg.llm.provider}")
+    click.echo(f"Model:     {cfg.llm.model}")
+    click.echo(f"Verdict:   {result.get('verdict', 'unknown')}")
+    click.echo(f"Reasoning: {result.get('reasoning', '')}")
+
+    reasoning = str(result.get("reasoning", "")).lower()
+    if result.get("findings"):
+        click.echo(f"Findings:  {len(result['findings'])} returned during probe")
+
+    if any(token in reasoning for token in ("no api key", "unavailable", "failed")):
+        sys.exit(1)
+
+    if result.get("verdict") == "fail":
+        sys.exit(1)
+
+
+@llm_group.command("models")
+@click.option("--config", "config_path", type=click.Path(exists=True), default=None)
+@click.option("--filter", "name_filter", default="", help="Filter model ids (case-insensitive substring)")
+@click.option("--limit", default=20, show_default=True, help="Max models to print")
+def llm_models(config_path: str | None, name_filter: str, limit: int):
+    """List models from OpenRouter (provider must be openrouter or pass OPENROUTER_API_KEY)."""
+    from compliancegate.config import get_api_key
+    from compliancegate.llm import fetch_openrouter_models
+
+    cfg = load_config(Path(config_path) if config_path else None)
+    api_key = get_api_key(cfg) if cfg.llm.provider == "openrouter" else os.environ.get("OPENROUTER_API_KEY")
+
+    try:
+        models = fetch_openrouter_models(api_key)
+    except Exception as exc:
+        click.echo(f"Failed to fetch OpenRouter models: {exc}")
+        sys.exit(1)
+
+    filt = name_filter.lower().strip()
+    shown = 0
+    for model in models:
+        model_id = str(model.get("id", ""))
+        if filt and filt not in model_id.lower():
+            continue
+        ctx = model.get("context_length")
+        ctx_label = f"{ctx} ctx" if ctx else "ctx ?"
+        click.echo(f"  {model_id:<44} {ctx_label}")
+        shown += 1
+        if shown >= limit:
+            break
+
+    if not shown:
+        click.echo("No models matched.")
+        sys.exit(1)
+
+    if shown == limit:
+        click.echo(f"\nShowing first {limit}. Use --limit or --filter to narrow.")
+
+
 @main.command("init")
 @click.option("--repo", type=click.Path(exists=True), default=".", help="Target git repo root")
 @click.option(
@@ -305,6 +409,8 @@ def cmd_status(config_path: str | None):
         my = "on" if cfg.retention.mysql.enabled else "off"
         click.echo(f"Remote:      postgres={pg} mysql={my} payload={cfg.retention.remote_payload}")
     click.echo(f"LLM:         {cfg.llm.provider} / {cfg.llm.model}")
+    from compliancegate.langchain_pipeline import describe_langchain_pipeline
+    click.echo(f"Pipeline:    {describe_langchain_pipeline(cfg)}")
     click.echo(f"Session:     {active or 'none'}")
     click.echo(f"Unresolved:  {len(unresolved)} findings (medium+)")
 

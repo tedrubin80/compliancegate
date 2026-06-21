@@ -56,13 +56,24 @@ class ComplianceReviewer:
         # Layer 1: fast heuristic scan (base + enabled rule packs)
         heuristic_findings = [Finding(**f) for f in heuristic_scan(diff_text, patterns)]
 
-        # Layer 2: LLM reasoning review
+        # Layer 2: LLM review (optional LangChain reasoning → analytical pipeline)
+        pack_context = [
+            {
+                "id": pack.id,
+                "name": pack.name,
+                "sensitive": pack.sensitive,
+                "frameworks": pack.frameworks,
+                "rules": pack.rules,
+            }
+            for pack in packs
+        ]
         llm_result = self.llm.review(
             diff_text=diff_text,
             frameworks=frameworks,
             custom_rules=rules,
             trigger=trigger,
             prior_decisions=prior_decisions,
+            pack_context=pack_context,
         )
 
         llm_findings = [

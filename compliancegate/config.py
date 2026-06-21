@@ -12,14 +12,31 @@ from compliancegate.storage import resolve_storage_mode
 
 @dataclass
 class LLMConfig:
-    provider: str = "openai"
+    provider: str = "openai"  # openai | openrouter | ollama
     api_url: str = "https://api.openai.com/v1/chat/completions"
     api_key_env: str = "OPENAI_API_KEY"
     model: str = "gpt-4o-mini"
+    fallback_models: list[str] = field(default_factory=list)
     ollama_url: str = "http://localhost:11434/api/chat"
     ollama_model: str = "llama3.2"
     timeout_seconds: int = 120
     redact_before_send: bool = True
+    json_mode: bool = True
+    site_url: str = "https://compliancegate.dev"
+    app_title: str = "ComplianceGate"
+
+
+@dataclass
+class LangChainStageConfig:
+    model: str = ""
+    temperature: float = 0.2
+
+
+@dataclass
+class LangChainConfig:
+    enabled: bool = False
+    reasoning: LangChainStageConfig = field(default_factory=LangChainStageConfig)
+    analytical: LangChainStageConfig = field(default_factory=LangChainStageConfig)
 
 
 @dataclass
@@ -82,6 +99,7 @@ class HarnessConfig:
     storage: StorageConfig = field(default_factory=StorageConfig)
     retention: RetentionConfig = field(default_factory=RetentionConfig)
     llm: LLMConfig = field(default_factory=LLMConfig)
+    langchain: LangChainConfig = field(default_factory=LangChainConfig)
     compliance: ComplianceConfig = field(default_factory=ComplianceConfig)
     watch: WatchConfig = field(default_factory=WatchConfig)
     reporting: ReportingConfig = field(default_factory=ReportingConfig)
@@ -108,6 +126,69 @@ class HarnessConfig:
 
 SEVERITY_ORDER = {"low": 0, "medium": 1, "high": 2, "critical": 3}
 
+LLM_PROVIDER_DEFAULTS = {
+    "openai": {
+        "api_url": "https://api.openai.com/v1/chat/completions",
+        "api_key_env": "OPENAI_API_KEY",
+        "model": "gpt-4o-mini",
+    },
+    "openrouter": {
+        "api_url": "https://openrouter.ai/api/v1/chat/completions",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "model": "anthropic/claude-3.5-sonnet",
+    },
+}
+
+
+def build_llm_config(llm_raw: dict[str, Any]) -> LLMConfig:
+    provider = str(llm_raw.get("provider", "openai")).lower()
+    defaults = LLM_PROVIDER_DEFAULTS.get(provider, LLM_PROVIDER_DEFAULTS["openai"])
+
+    return LLMConfig(
+        provider=provider,
+        api_url=llm_raw.get("api_url", defaults["api_url"]),
+        api_key_env=llm_raw.get("api_key_env", defaults["api_key_env"]),
+        model=llm_raw.get("model", defaults["model"]),
+        fallback_models=list(llm_raw.get("fallback_models", [])),
+        ollama_url=llm_raw.get("ollama_url", "http://localhost:11434/api/chat"),
+        ollama_model=llm_raw.get("ollama_model", "llama3.2"),
+        timeout_seconds=int(llm_raw.get("timeout_seconds", 120)),
+        redact_before_send=bool(llm_raw.get("redact_before_send", True)),
+        json_mode=bool(llm_raw.get("json_mode", True)),
+        site_url=llm_raw.get("site_url", "https://compliancegate.dev"),
+        app_title=llm_raw.get("app_title", "ComplianceGate"),
+    )
+
+
+def build_langchain_config(raw: dict[str, Any], llm: LLMConfig) -> LangChainConfig:
+    if not raw:
+        return LangChainConfig()
+
+    reasoning_raw = raw.get("reasoning", {}) or {}
+    analytical_raw = raw.get("analytical", {}) or {}
+
+    if llm.provider == "openrouter":
+        default_reasoning = "anthropic/claude-3.5-sonnet"
+        default_analytical = "openai/gpt-4o-mini"
+    elif llm.provider == "openai":
+        default_reasoning = "gpt-4o"
+        default_analytical = "gpt-4o-mini"
+    else:
+        default_reasoning = llm.model or llm.ollama_model
+        default_analytical = llm.model or llm.ollama_model
+
+    return LangChainConfig(
+        enabled=bool(raw.get("enabled", False)),
+        reasoning=LangChainStageConfig(
+            model=str(reasoning_raw.get("model") or default_reasoning),
+            temperature=float(reasoning_raw.get("temperature", 0.3)),
+        ),
+        analytical=LangChainStageConfig(
+            model=str(analytical_raw.get("model") or default_analytical),
+            temperature=float(analytical_raw.get("temperature", 0.1)),
+        ),
+    )
+
 
 def load_config(path: Path | None = None) -> HarnessConfig:
     config_path = path or _find_config()
@@ -127,6 +208,7 @@ def load_config(path: Path | None = None) -> HarnessConfig:
 
     compliance_raw = raw.get("compliance", {})
     llm_raw = raw.get("llm", {})
+    langchain_raw = raw.get("langchain", {})
     storage_raw = raw.get("storage", {})
 
     mode = storage_raw.get("mode", "sqlite_markdown")
@@ -150,6 +232,8 @@ def load_config(path: Path | None = None) -> HarnessConfig:
         daily_markdown=reporting_raw.get("daily_markdown", storage.use_markdown),
     )
 
+    llm_cfg = build_llm_config(llm_raw)
+
     return HarnessConfig(
         project_name=raw.get("project", {}).get("name", repo_root.name),
         repo_root=repo_root,
@@ -167,16 +251,8 @@ def load_config(path: Path | None = None) -> HarnessConfig:
                 url_env=mysql_raw.get("url_env", "CG_MYSQL_URL"),
             ),
         ),
-        llm=LLMConfig(
-            provider=llm_raw.get("provider", "openai"),
-            api_url=llm_raw.get("api_url", "https://api.openai.com/v1/chat/completions"),
-            api_key_env=llm_raw.get("api_key_env", "OPENAI_API_KEY"),
-            model=llm_raw.get("model", "gpt-4o-mini"),
-            ollama_url=llm_raw.get("ollama_url", "http://localhost:11434/api/chat"),
-            ollama_model=llm_raw.get("ollama_model", "llama3.2"),
-            timeout_seconds=llm_raw.get("timeout_seconds", 120),
-            redact_before_send=llm_raw.get("redact_before_send", True),
-        ),
+        llm=llm_cfg,
+        langchain=build_langchain_config(langchain_raw, llm_cfg),
         compliance=ComplianceConfig(
             rule_packs=compliance_raw.get("rule_packs", ["base"]),
             rules_dir=compliance_raw.get("rules_dir", ""),
