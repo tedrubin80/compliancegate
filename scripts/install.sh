@@ -83,6 +83,16 @@ fi
 echo ""
 echo "==> Done — https://compliancegate.dev"
 "$CG_CMD" status 2>/dev/null || true
+
+SKILLS_SRC="$HARNESS_ROOT/skills/compliancegate"
+SKILLS_DEST="$REPO/.cursor/skills/compliancegate"
+if [[ -f "$SKILLS_SRC/SKILL.md" ]]; then
+  mkdir -p "$SKILLS_DEST"
+  cp -a "$SKILLS_SRC/." "$SKILLS_DEST/"
+  echo "==> Project skill installed → $SKILLS_DEST"
+fi
+
 echo ""
 echo "  compliancegate watch"
+echo "  npx compliancegate skills install --project   # agent skill (personal)"
 echo "  CG_SKIP=1 git commit   # emergency bypass"

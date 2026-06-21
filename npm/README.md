@@ -48,6 +48,16 @@ Or use the venv directly:
 .venv/bin/compliancegate watch
 ```
 
+## Agent skills
+
+```bash
+npx compliancegate skills install              # compliancegate → ~/.cursor/skills/
+npx compliancegate skills install --all          # Cursor + Claude
+npx compliancegate skills install --all-skills   # + compliance-review standalone skill
+npx compliancegate skills install --project      # .cursor/skills/ in current repo
+npx compliancegate skills check
+```
+
 ## Local development
 
 Install from this monorepo instead of GitHub:

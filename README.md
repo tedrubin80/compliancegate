@@ -31,6 +31,25 @@ compliancegate status
 
 Short alias: **`cg`**
 
+## Agent skills
+
+Two Cursor / Claude skills ship in `skills/`:
+
+| Skill | Use when |
+|-------|----------|
+| `compliancegate` | Repo has CG hooks — invoke CLI, interpret findings |
+| `compliance-review` | Standalone in-chat review — no CG install required |
+
+```bash
+# Personal skills (Cursor / Claude home)
+npx compliancegate skills install
+npx compliancegate skills install --all-skills --all
+
+# Project-local (copies to .cursor/skills/ in repo)
+npx compliancegate skills install --project
+bash scripts/install.sh --repo .   # also installs compliancegate skill
+```
+
 ## Storage modes
 
 | Mode | Saves to |

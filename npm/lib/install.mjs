@@ -95,6 +95,7 @@ export function installComplianceGate(options = {}) {
 
   console.log("\nNext:");
   console.log(`  ${cg} watch`);
+  console.log("  npx compliancegate skills install --project   # agent skill in repo");
   console.log("  CG_SKIP=1 git commit   # emergency bypass (logged)");
   return { repo, cg, configPath };
 }
