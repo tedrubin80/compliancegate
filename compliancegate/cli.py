@@ -7,17 +7,18 @@ from pathlib import Path
 
 import click
 
-from compliance_harness import __version__
-from compliance_harness.config import load_config, severity_at_or_above
-from compliance_harness.db import ComplianceDB
-from compliance_harness.git_hooks import init_project, install_hooks
-from compliance_harness.markdown_export import write_daily_report, write_session_report
-from compliance_harness.reviewer import ComplianceReviewer
-from compliance_harness.session import SessionManager
+from compliancegate import __version__
+from compliancegate.config import load_config, severity_at_or_above
+from compliancegate.db import ComplianceDB
+from compliancegate.git_hooks import init_project, install_hooks
+from compliancegate.markdown_export import write_daily_report, write_session_report
+from compliancegate.reviewer import ComplianceReviewer
+from compliancegate.session import SessionManager
+from compliancegate.storage import describe_storage_mode
 
 
 def _skip_check() -> bool:
-    return os.environ.get("CRH_SKIP", "").strip() in ("1", "true", "yes")
+    return os.environ.get("CG_SKIP", "").strip() in ("1", "true", "yes")
 
 
 def _print_result(result, label: str) -> None:
@@ -39,25 +40,88 @@ def _print_result(result, label: str) -> None:
             if f.recommendation:
                 click.echo(f"    → {f.recommendation}")
     click.echo(f"\nSession: {result.session_id[:8]}... | Review: {result.review_id[:8]}...")
-    click.echo(f"SQLite:  decisions + findings persisted")
     click.echo(f"{'=' * 60}\n")
 
 
+def _storage_note(cfg) -> str:
+    parts = []
+    if cfg.storage.persist_sqlite:
+        parts.append(f"SQLite → {cfg.repo_root / cfg.storage.sqlite_path}")
+    if cfg.storage.use_markdown:
+        parts.append(f"Markdown → {cfg.markdown_dir}")
+    if cfg.storage.use_remote:
+        parts.append("Remote DB (Postgres/MySQL)")
+    if not parts:
+        parts.append("in-memory session only")
+    return " | ".join(parts)
+
+
 @click.group()
-@click.version_option(__version__, prog_name="crh")
+@click.version_option(__version__, prog_name="compliancegate")
 def main():
-    """Compliance Review Harness — governance gap layer for AI-assisted development."""
+    """ComplianceGate — governance gap layer between AI-assisted coding and ship."""
     pass
+
+
+@main.group("rules")
+def rules_group():
+    """Inspect modular compliance rule packs (HIPAA, PII, PCI, etc.)."""
+    pass
+
+
+@rules_group.command("list")
+@click.option("--config", "config_path", type=click.Path(exists=True), default=None)
+def rules_list(config_path: str | None):
+    """List available rule packs and sensitivity flags."""
+    from compliancegate.rules.loader import list_available_packs
+
+    cfg = load_config(Path(config_path) if config_path else None)
+    click.echo(f"Rules dir: {cfg.rules_dir}\n")
+    for pack in list_available_packs(cfg.rules_dir):
+        flag = "SENSITIVE" if pack["sensitive"] else "safe"
+        click.echo(
+            f"  {pack['id']:8}  [{flag:9}]  {pack['name']}  "
+            f"({pack['rules']} rules, {pack['patterns']} patterns)"
+        )
+    click.echo(f"\nEnabled in config: {', '.join(cfg.compliance.rule_packs)}")
+
+
+@rules_group.command("show")
+@click.argument("pack_id")
+@click.option("--config", "config_path", type=click.Path(exists=True), default=None)
+def rules_show(pack_id: str, config_path: str | None):
+    """Show rules and patterns for one pack."""
+    from compliancegate.rules.loader import load_rule_packs
+
+    cfg = load_config(Path(config_path) if config_path else None)
+    pack = load_rule_packs([pack_id], cfg.rules_dir)[0]
+    click.echo(f"# {pack.name} ({pack.id})")
+    click.echo(f"sensitive: {pack.sensitive}")
+    click.echo(f"frameworks: {', '.join(pack.frameworks)}\n")
+    click.echo("## Rules")
+    for rule in pack.rules:
+        click.echo(f"  - {rule}")
+    if pack.patterns:
+        click.echo("\n## Patterns")
+        for p in pack.patterns:
+            click.echo(f"  - [{p.severity}] {p.title} ({p.category})")
 
 
 @main.command("init")
 @click.option("--repo", type=click.Path(exists=True), default=".", help="Target git repo root")
-@click.option("--config", "config_path", type=click.Path(exists=True), default=None)
-def cmd_init(repo: str, config_path: str | None):
-    """Initialize harness, SQLite storage, and git hooks in a repo."""
+@click.option(
+    "--mode",
+    type=click.Choice(["sqlite", "markdown", "remote", "sqlite_markdown", "all"]),
+    default=None,
+    help="Where review data is persisted",
+)
+def cmd_init(repo: str, mode: str | None):
+    """Initialize harness, storage, and git hooks in a repo."""
     repo_root = Path(repo).resolve()
     harness_root = Path(__file__).resolve().parent.parent
-    init_project(repo_root, harness_root)
+    init_project(repo_root, harness_root, storage_mode=mode)
+    if mode:
+        click.echo(f"Storage mode: {describe_storage_mode(mode)}")
 
 
 @main.command("install-hooks")
@@ -74,13 +138,13 @@ def cmd_install_hooks(repo: str):
 def cmd_pre_commit(config_path: str | None):
     """Gate: run compliance review before commit."""
     if _skip_check():
-        click.echo("[crh] CRH_SKIP set — bypassing pre-commit review (decision logged if possible)")
+        click.echo("[compliancegate] CG_SKIP set — bypassing pre-commit review (decision logged if possible)")
         try:
             cfg = load_config(Path(config_path) if config_path else None)
             db = ComplianceDB(cfg.sqlite_path)
             sm = SessionManager(cfg, db)
             sid = sm.ensure_session()
-            db.record_decision(sid, "pre-commit", "skip", reasoning="CRH_SKIP override", actor="developer")
+            db.record_decision(sid, "pre-commit", "skip", reasoning="CG_SKIP override", actor="developer")
         except Exception:
             pass
         sys.exit(0)
@@ -92,6 +156,7 @@ def cmd_pre_commit(config_path: str | None):
         block_threshold=cfg.compliance.block_commit_on,
     )
     _print_result(result, "PRE-COMMIT COMPLIANCE REVIEW")
+    click.echo(f"Saved: {_storage_note(cfg)}")
     sys.exit(0 if result.allowed else 1)
 
 
@@ -100,7 +165,7 @@ def cmd_pre_commit(config_path: str | None):
 def cmd_pre_push(config_path: str | None):
     """Gate: loopback review of all session changes before push."""
     if _skip_check():
-        click.echo("[crh] CRH_SKIP set — bypassing pre-push review")
+        click.echo("[compliancegate] CG_SKIP set — bypassing pre-push review")
         sys.exit(0)
 
     cfg = load_config(Path(config_path) if config_path else None)
@@ -135,7 +200,7 @@ def cmd_review(config_path: str | None, trigger: str):
 @click.option("--config", "config_path", type=click.Path(exists=True), default=None)
 def cmd_watch(config_path: str | None):
     """Live coding alert layer — watches file changes and flags compliance issues."""
-    from compliance_harness.watcher import run_watcher
+    from compliancegate.watcher import run_watcher
 
     run_watcher(Path(config_path) if config_path else None)
 
@@ -182,7 +247,7 @@ def cmd_sync_db(config_path: str | None, session_id: str | None):
     cfg = load_config(Path(config_path) if config_path else None)
     db = ComplianceDB(cfg.sqlite_path)
 
-    from compliance_harness.remote_db import sync_all, sync_session
+    from compliancegate.remote_db import sync_all, sync_session
 
     try:
         if session_id:
@@ -190,15 +255,15 @@ def cmd_sync_db(config_path: str | None, session_id: str | None):
         else:
             counts = sync_all(cfg, db)
     except ImportError as exc:
-        click.echo(f"Missing driver: {exc}. Install with: pip install 'compliance-review-harness[postgres]' or '[mysql]'")
+        click.echo(f"Missing driver: {exc}. Install with: pip install 'compliancegate[postgres]' or '[mysql]'")
         sys.exit(1)
     except RuntimeError as exc:
         click.echo(str(exc))
         sys.exit(1)
 
     if not counts:
-        click.echo("No remote backends enabled. Set retention.postgres or retention.mysql in config.yaml.")
-        sys.exit(0)
+        click.echo("No remote backends enabled. Enable retention.postgres or retention.mysql in config.yaml.")
+        sys.exit(1)
 
     for backend, n in counts.items():
         click.echo(f"{backend}: synced {n} rows")
@@ -206,10 +271,13 @@ def cmd_sync_db(config_path: str | None, session_id: str | None):
 
 @main.command("export-json")
 @click.option("--config", "config_path", type=click.Path(exists=True), default=None)
-@click.option("--output", "-o", default=".compliance/export.json")
+@click.option("--output", "-o", default=".compliancegate/export.json")
 def cmd_export_json(config_path: str | None, output: str):
     """Export all SQLite retention data to JSON."""
     cfg = load_config(Path(config_path) if config_path else None)
+    if not cfg.storage.persist_sqlite:
+        click.echo("storage.mode does not persist SQLite — nothing to export. Use export-md or sync-db.")
+        sys.exit(1)
     db = ComplianceDB(cfg.sqlite_path)
     out = cfg.repo_root / output
     db.export_json(out, cfg.project_name)
@@ -227,8 +295,15 @@ def cmd_status(config_path: str | None):
 
     click.echo(f"Project:     {cfg.project_name}")
     click.echo(f"Repo:        {cfg.repo_root}")
-    click.echo(f"SQLite:      {cfg.sqlite_path}")
-    click.echo(f"Reports:     {cfg.markdown_dir}")
+    click.echo(f"Storage:     {describe_storage_mode(cfg.storage.mode)}")
+    if cfg.storage.persist_sqlite:
+        click.echo(f"SQLite:      {cfg.sqlite_path}")
+    if cfg.storage.use_markdown:
+        click.echo(f"Reports:     {cfg.markdown_dir}")
+    if cfg.storage.use_remote:
+        pg = "on" if cfg.retention.postgres.enabled else "off"
+        my = "on" if cfg.retention.mysql.enabled else "off"
+        click.echo(f"Remote:      postgres={pg} mysql={my} payload={cfg.retention.remote_payload}")
     click.echo(f"LLM:         {cfg.llm.provider} / {cfg.llm.model}")
     click.echo(f"Session:     {active or 'none'}")
     click.echo(f"Unresolved:  {len(unresolved)} findings (medium+)")

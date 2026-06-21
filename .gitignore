@@ -1,5 +1,6 @@
-.compliance/data/
-.compliance/reports/
+.compliancegate/data/
+.compliancegate/reports/
+.compliancegate/.session.db
 config.yaml
 __pycache__/
 *.pyc

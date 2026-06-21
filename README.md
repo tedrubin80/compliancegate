@@ -1,170 +1,70 @@
-# Compliance Review Harness
+# ComplianceGate
 
-A governance **gap layer** for AI-assisted development. It sits between your editor, commit, and push — recording every compliance decision, persisting audit data to **SQLite**, and writing **markdown reports** per session and per day.
+**compliancegate.dev** — governance gap layer between AI-assisted coding and ship.
 
-> Governance and compliance in AI coding is the wild west. This is a stopgap: alert while coding, gate before commit, loopback review before push.
+ComplianceGate records policy decisions, runs pre-commit/pre-push checks, and saves audit data to **your choice of storage**: local SQLite, markdown, or remote Postgres/MySQL.
 
-## What it does
+> AI governance is the wild west. ComplianceGate is the gate before push.
 
-| Layer | When | What |
-|-------|------|------|
-| **Live watch** | While coding | File change alerts for critical/high compliance issues |
-| **Pre-commit** | Before commit | Heuristic + LLM review; blocks on critical findings |
-| **Pre-push** | Before push | Loopback review of entire session with decision context |
-| **Retention** | Always | SQLite archive + daily/session markdown audit trails |
-
-## Architecture
-
-```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  File Watch │────▶│  Review Engine   │────▶│  SQLite DB      │
-│  (alerts)   │     │  heuristic+LLM   │     │  decisions      │
-└─────────────┘     └────────┬─────────┘     │  reviews        │
-                              │               │  findings       │
-┌─────────────┐               │               └────────┬────────┘
-│ Pre-commit  │───────────────┤                        │
-│ Pre-push    │───────────────┤                        ▼
-└─────────────┘               │               ┌─────────────────┐
-                              └──────────────▶│  MD Reports     │
-                                              │  session + daily│
-                                              └─────────────────┘
-```
-
-## Quick start
+## Install
 
 ```bash
-cd /path/to/your/repo
-pip install -e /var/www/compliance
-
-# Initialize in your project (installs git hooks, creates .compliance/)
-crh init
-
-# Copy and edit config
-cp config.example.yaml config.yaml   # or edit the one crh init creates
-
-# Set your LLM key (OpenAI-compatible API)
-export OPENAI_API_KEY=sk-...
-
-# Live coding alerts
-crh watch
-
-# Manual review
-crh review
-
-# Check status / unresolved findings
-crh status
+bash scripts/install.sh --repo /path/to/your/project --mode sqlite_markdown
 ```
 
-## LLM providers
-
-### OpenAI / Azure / any OpenAI-compatible API
-
-```yaml
-llm:
-  provider: openai
-  api_url: "https://api.openai.com/v1/chat/completions"
-  api_key_env: OPENAI_API_KEY
-  model: "gpt-4o-mini"
-```
-
-### Local Ollama
-
-```yaml
-llm:
-  provider: ollama
-  ollama_url: "http://localhost:11434/api/chat"
-  ollama_model: "llama3.2"
-```
-
-Without an LLM configured, heuristic pattern scanning still runs (secrets, PII patterns, eval/exec, SSL bypass).
-
-## SQLite retention
-
-All decisions, reviews, and findings are stored in `.compliance/data/compliance.db`:
-
-- **sessions** — coding sessions with git branch/HEAD
-- **decisions** — allow/block/skip with reasoning and trigger
-- **reviews** — full review records with diff summaries
-- **compliance_findings** — severity-tagged issues with framework mapping
-
-Export for external systems:
+## CLI
 
 ```bash
-crh export-json -o .compliance/archive.json
-crh export-md --daily
-crh export-md --session-id <uuid>
+compliancegate init --mode markdown
+compliancegate watch
+compliancegate rules list
+compliancegate status
 ```
 
-### Postgres / MySQL retention
+Short alias: **`cg`**
 
-SQLite stays the local source of truth. Enable remote mirroring in `config.yaml`:
+## Storage modes
+
+| Mode | Saves to |
+|------|----------|
+| `sqlite` | `.compliancegate/data/compliancegate.db` |
+| `markdown` | Session + daily `.md` in `.compliancegate/reports/` |
+| `remote` | Postgres/MySQL (metadata-only by default) |
+| `sqlite_markdown` | SQLite + markdown **(default)** |
+| `all` | SQLite + markdown + remote |
 
 ```yaml
-retention:
-  sync_on_review: true
-  postgres:
-    enabled: true
-    url_env: CRH_POSTGRES_URL
-  mysql:
-    enabled: true
-    url_env: CRH_MYSQL_URL
+storage:
+  mode: sqlite_markdown
 ```
+
+## Rule packs
 
 ```bash
-pip install 'compliance-review-harness[postgres]'   # psycopg
-pip install 'compliance-review-harness[mysql]'       # pymysql
-
-export CRH_POSTGRES_URL=postgresql://user:pass@localhost:5432/compliance
-export CRH_MYSQL_URL=mysql://user:pass@localhost:3306/compliance
-
-crh sync-db              # full sync
-crh sync-db --session-id <uuid>
+compliancegate rules show hipaa
 ```
 
-Remote sync runs automatically after each review when enabled.
+```yaml
+compliance:
+  rule_packs: [base, pii, hipaa, pci]
+```
+
+## Remote database (optional)
+
+```bash
+pip install 'compliancegate[postgres,mysql]'
+export CG_POSTGRES_URL=postgresql://user:pass@localhost:5432/compliancegate
+compliancegate sync-db
+```
 
 ## Git hooks
 
-`crh init` installs:
+Emergency bypass: `CG_SKIP=1 git commit`
 
-- **pre-commit** — compliance review; blocks on `critical` (configurable)
-- **pre-push** — loopback session review; blocks on `high` (configurable)
+## Links
 
-Emergency bypass (logged to SQLite):
-
-```bash
-CRH_SKIP=1 git commit -m "hotfix"
-```
-
-## Configuration
-
-See `config.example.yaml` for all options:
-
-- `compliance.frameworks` — SOC2, GDPR, HIPAA, etc.
-- `compliance.custom_rules` — project-specific policy rules
-- `compliance.block_commit_on` / `block_push_on` — severity thresholds
-- `watch.ignore_patterns` — paths to skip in live watch
-
-## CLI reference
-
-```
-crh init              Initialize harness + hooks in a repo
-crh install-hooks     Re-install git hooks
-crh watch             Live coding compliance alerts
-crh review            On-demand review of current diff
-crh pre-commit        Pre-commit gate (called by hook)
-crh pre-push          Pre-push loopback gate (called by hook)
-crh loopback          Re-review entire session
-crh status            Session + unresolved findings
-crh end-session       Close session, write reports
-crh export-md         Generate markdown from SQLite
-crh export-json       Export SQLite data to JSON
-crh sync-db           Mirror SQLite to Postgres/MySQL
-```
-
-## Repo
-
-Target GitHub repo: [tedrubin80/ComplianceReviewharness](https://github.com/tedrubin80/ComplianceReviewharness)
+- **Site:** [compliancegate.dev](https://compliancegate.dev)
+- **Repo:** [github.com/tedrubin80/compliancegate](https://github.com/tedrubin80/compliancegate)
 
 ## License
 

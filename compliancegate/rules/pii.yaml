@@ -1,0 +1,30 @@
+# PII detection — findings may reference sample data; treat as local-sensitive
+id: pii
+name: PII / Personal Data
+sensitive: true
+frameworks:
+  - GDPR
+  - CCPA
+rules:
+  - Do not log names, emails, phone numbers, or addresses to stdout or error handlers
+  - Do not persist PII in client-side storage without encryption and retention policy
+  - User identifiers must be pseudonymized or hashed where full identity is not required
+  - Data export endpoints must enforce authentication and audit logging
+  - Cookie and tracking changes require privacy review
+patterns:
+  - pattern: '(?i)(ssn|social.security|social_security)'
+    severity: critical
+    title: Possible SSN in code
+    category: privacy
+  - pattern: '(?i)(email\s*[:=]\s*[''"][^''"@]+@[^''"]+[''"])'
+    severity: high
+    title: Hardcoded email address
+    category: privacy
+  - pattern: '(?i)(phone|mobile|telephone)\s*[:=]\s*[''"][0-9]{3}'
+    severity: high
+    title: Possible phone number in source
+    category: privacy
+  - pattern: '(?i)(first.name|last.name|date.of.birth|dob)\s*[:=]'
+    severity: medium
+    title: Possible personal attribute field
+    category: privacy

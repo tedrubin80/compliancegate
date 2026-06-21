@@ -6,7 +6,8 @@ from typing import Any
 
 import httpx
 
-from compliance_harness.config import HarnessConfig, get_api_key
+from compliancegate.config import HarnessConfig, get_api_key
+from compliancegate.sanitize import sanitize_for_llm
 
 
 SYSTEM_PROMPT = """You are a governance and compliance reviewer for software development.
@@ -46,6 +47,8 @@ class LLMClient:
         trigger: str,
         prior_decisions: list[dict] | None = None,
     ) -> dict[str, Any]:
+        if self.config.llm.redact_before_send:
+            diff_text = sanitize_for_llm(diff_text, True)
         user_content = self._build_prompt(diff_text, frameworks, custom_rules, trigger, prior_decisions)
 
         if self.config.llm.provider == "ollama":
@@ -160,7 +163,7 @@ def _is_heuristic_excluded(line: str) -> bool:
     return False
 
 
-def heuristic_scan(diff_text: str) -> list[dict]:
+def heuristic_scan(diff_text: str, extra_patterns: list | None = None) -> list[dict]:
     """Fast local pattern scan — runs even without LLM. Only inspects added lines."""
     findings = []
     added_lines = [
@@ -173,24 +176,27 @@ def heuristic_scan(diff_text: str) -> list[dict]:
         return findings
 
     patterns = [
-        (r"(?i)(api[_-]?key|secret|password|token)\s*=\s*['\"][^'\"]{8,}", "critical", "Possible hardcoded secret"),
-        (r"(?i)(aws_secret|private_key|BEGIN RSA PRIVATE KEY)", "critical", "Possible credential leak"),
-        (r"(?i)(ssn|social.security|credit.card)", "high", "Possible PII in code"),
-        (r"(?i)eval\s*\(", "high", "Use of eval() detected"),
-        (r"(?i)exec\s*\(", "high", "Use of exec() detected"),
-        (r"(?i)disable.*ssl|verify\s*=\s*False", "high", "SSL verification disabled"),
+        (r"(?i)(api[_-]?key|secret|password|token)\s*=\s*['\"][^'\"]{8,}", "critical", "Possible hardcoded secret", "security"),
+        (r"(?i)(aws_secret|private_key|BEGIN RSA PRIVATE KEY)", "critical", "Possible credential leak", "security"),
+        (r"(?i)eval\s*\(", "high", "Use of eval() detected", "security"),
+        (r"(?i)exec\s*\(", "high", "Use of exec() detected", "security"),
+        (r"(?i)disable.*ssl|verify\s*=\s*False", "high", "SSL verification disabled", "security"),
     ]
+    if extra_patterns:
+        for p in extra_patterns:
+            patterns.append((p.pattern, p.severity, p.title, p.category))
+
     import re
-    for pattern, severity, title in patterns:
+    for pattern, severity, title, category in patterns:
         if re.search(pattern, scan_text):
             findings.append({
                 "severity": severity,
-                "category": "security",
+                "category": category,
                 "framework": "internal",
                 "title": title,
-                "description": f"Pattern matched: {pattern}",
+                "description": f"Pattern matched in added lines",
                 "file_path": "",
                 "line_hint": "",
-                "recommendation": "Remove or rotate exposed values; use environment variables or a secrets manager.",
+                "recommendation": "Review change against enabled compliance rule packs.",
             })
     return findings

@@ -3,9 +3,9 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "compliance-review-harness"
+name = "compliancegate"
 version = "0.1.0"
-description = "Governance gap layer between AI-assisted coding, commit, and push"
+description = "ComplianceGate — governance gap layer between AI-assisted coding and ship (compliancegate.dev)"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -20,8 +20,12 @@ postgres = ["psycopg[binary]>=3.1"]
 mysql = ["pymysql>=1.1"]
 
 [project.scripts]
-crh = "compliance_harness.cli:main"
+compliancegate = "compliancegate.cli:main"
+cg = "compliancegate.cli:main"
+
+[project.urls]
+Homepage = "https://compliancegate.dev"
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["compliance_harness*"]
+include = ["compliancegate*"]

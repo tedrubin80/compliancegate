@@ -9,8 +9,8 @@ from pathlib import Path
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-from compliance_harness.config import HarnessConfig, load_config
-from compliance_harness.reviewer import ComplianceReviewer
+from compliancegate.config import HarnessConfig, load_config
+from compliancegate.reviewer import ComplianceReviewer
 
 
 class CodingAlertHandler(FileSystemEventHandler):
@@ -56,7 +56,7 @@ class CodingAlertHandler(FileSystemEventHandler):
             )
             _print_alert(result)
         except Exception as exc:
-            print(f"[crh:watch] alert error: {exc}", file=sys.stderr)
+            print(f"[compliancegate:watch] alert error: {exc}", file=sys.stderr)
 
 
 def run_watcher(config_path: Path | None = None) -> None:
@@ -71,8 +71,8 @@ def run_watcher(config_path: Path | None = None) -> None:
     observer.schedule(handler, str(config.repo_root), recursive=True)
     observer.start()
 
-    print(f"[crh:watch] Monitoring {config.repo_root} for compliance alerts...")
-    print("[crh:watch] Press Ctrl+C to stop.")
+    print(f"[compliancegate:watch] Monitoring {config.repo_root} for compliance alerts...")
+    print("[compliancegate:watch] Press Ctrl+C to stop.")
 
     try:
         while True:

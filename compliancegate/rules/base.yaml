@@ -1,0 +1,21 @@
+# General security and governance baseline (always safe to enable)
+id: base
+name: Base Security
+sensitive: false
+frameworks:
+  - SOC2
+  - internal
+rules:
+  - No hardcoded secrets, API keys, tokens, or credentials in source
+  - No credentials in comments, tests, or example fixtures committed to repo
+  - Auth and authorization changes require explicit review note in commit context
+  - Dependencies with known critical CVEs should not be introduced without justification
+patterns:
+  - pattern: '(?i)(api[_-]?key|secret|password|token)\s*=\s*[''"][^''"]{8,}'
+    severity: critical
+    title: Possible hardcoded secret
+    category: security
+  - pattern: '(?i)(aws_secret|private_key|BEGIN RSA PRIVATE KEY)'
+    severity: critical
+    title: Possible credential leak
+    category: security

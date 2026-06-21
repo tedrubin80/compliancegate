@@ -90,15 +90,18 @@ class Finding:
 
 
 class ComplianceDB:
-    def __init__(self, db_path: Path):
-        self.db_path = db_path
-        self.db_path.parent.mkdir(parents=True, exist_ok=True)
+    def __init__(self, db_path: Path | str):
+        self.db_path = str(db_path)
+        self._memory = self.db_path == ":memory:"
+        if not self._memory:
+            Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
         self._init_schema()
 
     def _connect(self) -> sqlite3.Connection:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
-        conn.execute("PRAGMA journal_mode=WAL")
+        if not self._memory:
+            conn.execute("PRAGMA journal_mode=WAL")
         conn.execute("PRAGMA foreign_keys=ON")
         return conn
 

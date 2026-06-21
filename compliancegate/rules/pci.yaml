@@ -1,0 +1,25 @@
+# PCI DSS — payment card data (never sync raw findings to remote DB)
+id: pci
+name: PCI DSS
+sensitive: true
+frameworks:
+  - PCI-DSS
+rules:
+  - Full PAN, CVV, magnetic stripe, or PIN data must never be stored or logged
+  - Cardholder data environments must not share credentials with non-CDE systems
+  - Payment forms must not log card fields; use tokenization via certified provider
+  - No card data in URLs, query strings, referrer headers, or error messages
+  - TLS required for all cardholder data transmission
+patterns:
+  - pattern: '\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|3[47][0-9]{13})\b'
+    severity: critical
+    title: Possible payment card number (PAN)
+    category: payment
+  - pattern: '(?i)(cvv|cvc|card.verification|security.code)\s*[:=]\s*[''"][0-9]{3,4}[''"]'
+    severity: critical
+    title: Possible CVV stored or logged
+    category: payment
+  - pattern: '(?i)(track1|track2|magnetic.stripe|pan\s*[:=])'
+    severity: critical
+    title: Possible card track or PAN field
+    category: payment

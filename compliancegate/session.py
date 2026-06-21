@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import subprocess
 
-from compliance_harness.config import HarnessConfig
-from compliance_harness.db import ComplianceDB
+from compliancegate.config import HarnessConfig
+from compliancegate.db import ComplianceDB
 
 
 class SessionManager:

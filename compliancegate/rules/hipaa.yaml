@@ -1,0 +1,26 @@
+# HIPAA — healthcare PHI handling (enable only when scope applies)
+id: hipaa
+name: HIPAA / PHI
+sensitive: true
+frameworks:
+  - HIPAA
+rules:
+  - PHI must not appear in logs, exceptions, analytics events, or AI prompts
+  - PHI at rest requires encryption; PHI in transit requires TLS 1.2+
+  - Minimum necessary access — no broad PHI fields in API responses
+  - BAAs required before sending PHI to third-party APIs (including LLM providers)
+  - Audit trail required for PHI read, write, export, and delete operations
+  - Session timeouts and automatic lockout for systems accessing PHI
+patterns:
+  - pattern: '(?i)(patient|diagnosis|icd.?10|mrn|medical.record|phi|hipaa)'
+    severity: medium
+    title: Possible PHI-related field or identifier
+    category: privacy
+  - pattern: '(?i)(health.plan|treatment|prescription|lab.result)'
+    severity: medium
+    title: Possible clinical data reference
+    category: privacy
+  - pattern: '(?i)(send.*openai|anthropic|gpt|llm).{0,40}(patient|phi|diagnosis)'
+    severity: critical
+    title: Possible PHI routed to external LLM
+    category: privacy

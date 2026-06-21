@@ -4,12 +4,13 @@ import os
 import sqlite3
 from typing import Any
 
-from compliance_harness.config import HarnessConfig
-from compliance_harness.db import ComplianceDB
+from compliancegate.config import HarnessConfig
+from compliancegate.db import ComplianceDB
+from compliancegate.sanitize import sanitize_for_remote
 
 TABLES = ("sessions", "decisions", "reviews", "compliance_findings")
 
-PG_SCHEMA = """
+POSTGRES_SCHEMA = """
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
     project_name TEXT NOT NULL,
@@ -109,17 +110,26 @@ CREATE TABLE IF NOT EXISTS compliance_findings (
 
 
 def maybe_sync_retention(config: HarnessConfig, db: ComplianceDB, session_id: str) -> None:
-    """Hook: mirror SQLite session data to enabled Postgres/MySQL backends."""
+    """Hook: mirror session data to enabled Postgres/MySQL backends."""
+    if not config.storage.use_remote:
+        return
     retention = config.retention
     if not retention.sync_on_review:
         return
     if not (retention.postgres.enabled or retention.mysql.enabled):
-        return
+        raise RuntimeError(
+            "storage.mode is 'remote' (or 'all') but no Postgres/MySQL backend is enabled in config.yaml"
+        )
     sync_session(config, db, session_id)
 
 
 def sync_session(config: HarnessConfig, db: ComplianceDB, session_id: str) -> dict[str, int]:
-    data = db.get_session_data(session_id)
+    raw = db.get_session_data(session_id)
+    data = sanitize_for_remote(
+        raw,
+        mode=config.retention.remote_payload,
+        sync_sensitive=config.retention.sync_sensitive_findings,
+    )
     counts: dict[str, int] = {}
 
     if config.retention.postgres.enabled:
@@ -151,7 +161,7 @@ def _sync_postgres(config: HarnessConfig, data: dict[str, Any]) -> int:
     upserted = 0
     with psycopg.connect(dsn) as conn:
         with conn.cursor() as cur:
-            for stmt in PG_SCHEMA.strip().split(";"):
+            for stmt in POSTGRES_SCHEMA.strip().split(";"):
                 if stmt.strip():
                     cur.execute(stmt)
             upserted += _upsert_rows(cur, "sessions", [data["session"]], _pg_upsert)

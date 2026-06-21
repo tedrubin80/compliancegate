@@ -1,65 +1,56 @@
+# ComplianceGate — https://compliancegate.dev
 # Copy to config.yaml and adjust for your environment.
 
 project:
   name: "my-project"
-  repo_root: "."  # relative to config file location
+  repo_root: "."
 
 storage:
-  # Local SQLite database for long-term decision/compliance retention
-  sqlite_path: ".compliance/data/compliance.db"
-  # Daily and session markdown audit trails
-  markdown_dir: ".compliance/reports"
+  # sqlite | markdown | remote | sqlite_markdown | all
+  mode: sqlite_markdown
+  sqlite_path: ".compliancegate/data/compliancegate.db"
+  markdown_dir: ".compliancegate/reports"
 
 llm:
-  # provider: openai | ollama | custom
   provider: openai
-  # OpenAI-compatible endpoint (works with OpenAI, Azure, local proxies)
   api_url: "https://api.openai.com/v1/chat/completions"
   api_key_env: "OPENAI_API_KEY"
   model: "gpt-4o-mini"
-  # Ollama settings (when provider: ollama)
   ollama_url: "http://localhost:11434/api/chat"
   ollama_model: "llama3.2"
   timeout_seconds: 120
+  redact_before_send: true
 
 compliance:
-  # Frameworks/rules the reviewer should check against
-  frameworks:
-    - "SOC2"
-    - "GDPR"
-    - "internal-security-policy"
-  # Severity threshold to block push (critical, high, medium, low)
+  rule_packs:
+    - base
+  frameworks: []
   block_push_on: "high"
-  # Severity threshold to block commit
   block_commit_on: "critical"
-  custom_rules:
-    - "No hardcoded secrets, API keys, or credentials in source"
-    - "No PII logged to stdout or error handlers"
-    - "Auth changes require explicit review note"
+  custom_rules: []
 
 watch:
   enabled: true
-  # Debounce file change alerts (seconds)
   debounce_seconds: 3
   ignore_patterns:
     - "**/.git/**"
     - "**/node_modules/**"
     - "**/__pycache__/**"
-    - "**/.compliance/**"
+    - "**/.compliancegate/**"
     - "**/venv/**"
     - "**/.venv/**"
 
 reporting:
-  # write session markdown on each review + daily rollup at midnight
   session_markdown: true
   daily_markdown: true
 
-# Optional remote retention (SQLite remains local source of truth)
 retention:
-  sync_on_review: true   # mirror to remote DB after each review
+  sync_on_review: false
+  remote_payload: metadata_only
+  sync_sensitive_findings: false
   postgres:
     enabled: false
-    url_env: CRH_POSTGRES_URL   # postgresql://user:pass@host:5432/compliance
+    url_env: CG_POSTGRES_URL
   mysql:
     enabled: false
-    url_env: CRH_MYSQL_URL      # mysql://user:pass@host:3306/compliance
+    url_env: CG_MYSQL_URL

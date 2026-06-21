@@ -4,11 +4,12 @@ import subprocess
 from dataclasses import dataclass
 from pathlib import Path
 
-from compliance_harness.config import HarnessConfig, severity_at_or_above
-from compliance_harness.db import ComplianceDB, Finding
-from compliance_harness.llm import LLMClient, heuristic_scan
-from compliance_harness.markdown_export import write_daily_report, write_session_report
-from compliance_harness.session import SessionManager
+from compliancegate.config import HarnessConfig, severity_at_or_above
+from compliancegate.db import ComplianceDB, Finding
+from compliancegate.llm import LLMClient, heuristic_scan
+from compliancegate.markdown_export import write_daily_report, write_session_report
+from compliancegate.rules.loader import load_rule_packs, merge_packs
+from compliancegate.session import SessionManager
 
 
 @dataclass
@@ -47,14 +48,19 @@ class ComplianceReviewer:
         files_changed = files_changed or []
         diff_summary = _summarize_diff(diff_text, files_changed)
 
-        # Layer 1: fast heuristic scan
-        heuristic_findings = [Finding(**f) for f in heuristic_scan(diff_text)]
+        packs = load_rule_packs(self.config.compliance.rule_packs, self.config.rules_dir)
+        frameworks, rules, patterns, _has_sensitive = merge_packs(packs)
+        frameworks = frameworks + [f for f in self.config.compliance.frameworks if f not in frameworks]
+        rules = rules + self.config.compliance.custom_rules
+
+        # Layer 1: fast heuristic scan (base + enabled rule packs)
+        heuristic_findings = [Finding(**f) for f in heuristic_scan(diff_text, patterns)]
 
         # Layer 2: LLM reasoning review
         llm_result = self.llm.review(
             diff_text=diff_text,
-            frameworks=self.config.compliance.frameworks,
-            custom_rules=self.config.compliance.custom_rules,
+            frameworks=frameworks,
+            custom_rules=rules,
             trigger=trigger,
             prior_decisions=prior_decisions,
         )
@@ -107,16 +113,17 @@ class ComplianceReviewer:
         )
 
         try:
-            from compliance_harness.remote_db import maybe_sync_retention
-            maybe_sync_retention(self.config, self.db, session_id)
+            if self.config.storage.use_remote:
+                from compliancegate.remote_db import maybe_sync_retention
+                maybe_sync_retention(self.config, self.db, session_id)
         except Exception as exc:
             import sys
-            print(f"[crh] retention sync warning: {exc}", file=sys.stderr)
+            print(f"[compliancegate] retention sync warning: {exc}", file=sys.stderr)
 
-        if self.config.reporting.session_markdown:
+        if self.config.storage.use_markdown and self.config.reporting.session_markdown:
             write_session_report(self.config, session_id)
 
-        if self.config.reporting.daily_markdown:
+        if self.config.storage.use_markdown and self.config.reporting.daily_markdown:
             write_daily_report(self.config)
 
         return ReviewResult(
