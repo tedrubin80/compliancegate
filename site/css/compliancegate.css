@@ -165,6 +165,114 @@
   margin-bottom: 0.25rem;
 }
 
+/* Pack checks table */
+
+.pack-checks {
+  margin-top: var(--space-xl);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--border);
+}
+
+.pack-checks-header h3 {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  color: var(--cream);
+  margin: 0 0 var(--space-sm);
+}
+
+.pack-checks-header p {
+  color: var(--muted);
+  max-width: 42rem;
+  margin: 0 0 var(--space-md);
+}
+
+.pack-checks-header strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.pack-cli {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm) var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.pack-cli code {
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  color: var(--gold);
+}
+
+.checks-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.checks-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.checks-table th,
+.checks-table td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.checks-table th {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-dark);
+  background: var(--surface-raised);
+}
+
+.checks-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.checks-table td {
+  color: var(--muted);
+}
+
+.checks-table td:first-child code {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--gold-dim);
+}
+
+.sev {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sev-critical { color: var(--blocker); }
+.sev-high { color: var(--concern); }
+.sev-medium { color: var(--watch); }
+
+.pack-checks-note {
+  margin-top: var(--space-md);
+  font-size: 0.875rem;
+  color: var(--muted-dark);
+  max-width: 48rem;
+}
+
+.pack-checks-note code {
+  font-size: 0.8125rem;
+  color: var(--muted);
+}
+
 /* Storage selector */
 
 .storage-grid {

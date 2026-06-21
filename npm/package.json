@@ -1,0 +1,41 @@
+{
+  "name": "compliancegate",
+  "version": "0.1.0",
+  "description": "Governance gap layer for AI-assisted code — pre-commit and pre-push compliance gates with local audit retention.",
+  "type": "module",
+  "bin": {
+    "compliancegate": "bin/compliancegate.js"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "compliance",
+    "security",
+    "pre-commit",
+    "git-hooks",
+    "hipaa",
+    "pci",
+    "pii",
+    "cursor",
+    "claude-code",
+    "copilot",
+    "ai-coding"
+  ],
+  "license": "MIT",
+  "homepage": "https://compliancegate.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tedrubin80/compliancegate.git",
+    "directory": "npm"
+  },
+  "bugs": {
+    "url": "https://github.com/tedrubin80/compliancegate/issues"
+  }
+}

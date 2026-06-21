@@ -150,45 +150,51 @@ class ComplianceReviewer:
         return self.review_changes(trigger="loopback", diff_text=diff_text)
 
 
+def _git_output(args: list[str], repo_root: Path) -> str:
+    """Run git and decode stdout safely (binary diffs may contain non-UTF-8 bytes)."""
+    result = subprocess.run(
+        ["git", *args],
+        cwd=repo_root,
+        capture_output=True,
+        check=False,
+    )
+    return result.stdout.decode("utf-8", errors="replace")
+
+
 def get_git_diff(repo_root: Path) -> tuple[str, list[str]]:
     try:
-        diff = subprocess.run(
-            ["git", "diff", "--cached"],
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-            check=False,
-        ).stdout
+        diff = _git_output(["diff", "--cached"], repo_root)
         if not diff.strip():
-            diff = subprocess.run(
-                ["git", "diff", "HEAD"],
-                cwd=repo_root,
-                capture_output=True,
-                text=True,
-                check=False,
-            ).stdout
+            diff = _git_output(["diff", "HEAD"], repo_root)
 
-        stat = subprocess.run(
-            ["git", "diff", "--cached", "--name-only"],
-            cwd=repo_root,
-            capture_output=True,
-            text=True,
-            check=False,
-        ).stdout
+        stat = _git_output(["diff", "--cached", "--name-only"], repo_root)
         files = [f for f in stat.strip().split("\n") if f]
         if not files:
-            stat = subprocess.run(
-                ["git", "diff", "HEAD", "--name-only"],
-                cwd=repo_root,
-                capture_output=True,
-                text=True,
-                check=False,
-            ).stdout
+            stat = _git_output(["diff", "HEAD", "--name-only"], repo_root)
             files = [f for f in stat.strip().split("\n") if f]
 
-        return diff, files
+        return _strip_binary_patch_hunks(diff), files
     except FileNotFoundError:
         return "", []
+
+
+def _strip_binary_patch_hunks(diff_text: str) -> str:
+    """Drop embedded binary patch data; keep 'Binary files differ' markers."""
+    if not diff_text.strip():
+        return diff_text
+
+    kept: list[str] = []
+    skip = False
+    for line in diff_text.splitlines():
+        if line.startswith("diff --git "):
+            skip = False
+        elif line.startswith("GIT binary patch"):
+            skip = True
+            continue
+        if skip:
+            continue
+        kept.append(line)
+    return "\n".join(kept)
 
 
 def _summarize_diff(diff_text: str, files: list[str]) -> str:

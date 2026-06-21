@@ -42,6 +42,7 @@ if [[ ! -d "$REPO/.git" ]]; then
 fi
 
 echo "==> Installing ComplianceGate (compliancegate.dev)"
+echo "    npx:      npx compliancegate install"
 echo "    Source:   $HARNESS_ROOT"
 echo "    Repo:     $REPO"
 echo "    Storage:  $MODE"

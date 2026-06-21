@@ -255,6 +255,104 @@
             </ul>
           </article>
         </div>
+
+        <div class="pack-checks reveal">
+          <div class="pack-checks-header">
+            <h3>What each check actually does</h3>
+            <p>Two layers on every review: <strong>heuristic patterns</strong> scan added diff lines locally; <strong>LLM rules</strong> evaluate policy when an API key or Ollama is configured. Inspect any pack from the CLI.</p>
+          </div>
+          <div class="code-block pack-cli">
+            <span class="code-label">Terminal</span>
+            <code>compliancegate rules list</code>
+            <code>compliancegate rules show pci</code>
+          </div>
+          <div class="checks-table-wrap">
+            <table class="checks-table">
+              <thead>
+                <tr>
+                  <th scope="col">Pack</th>
+                  <th scope="col">Check</th>
+                  <th scope="col">Layer</th>
+                  <th scope="col">Severity</th>
+                  <th scope="col">Blocks at</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>base</code></td>
+                  <td>Possible hardcoded secret / credential leak</td>
+                  <td>Heuristic</td>
+                  <td><span class="sev sev-critical">Critical</span></td>
+                  <td>Commit</td>
+                </tr>
+                <tr>
+                  <td><code>base</code></td>
+                  <td>eval(), exec(), SSL verification disabled</td>
+                  <td>Heuristic</td>
+                  <td><span class="sev sev-high">High</span></td>
+                  <td>Push</td>
+                </tr>
+                <tr>
+                  <td><code>base</code></td>
+                  <td>Auth changes need review note; no secrets in fixtures</td>
+                  <td>LLM rule</td>
+                  <td>Varies</td>
+                  <td>Per finding</td>
+                </tr>
+                <tr>
+                  <td><code>pii</code></td>
+                  <td>SSN, email, phone, name/DOB field patterns</td>
+                  <td>Heuristic</td>
+                  <td><span class="sev sev-critical">Critical</span> – <span class="sev sev-medium">Medium</span></td>
+                  <td>Per finding</td>
+                </tr>
+                <tr>
+                  <td><code>pii</code></td>
+                  <td>PII in logs, client storage, export endpoints</td>
+                  <td>LLM rule</td>
+                  <td>Varies</td>
+                  <td>Per finding</td>
+                </tr>
+                <tr>
+                  <td><code>hipaa</code></td>
+                  <td>PHI/clinical field references in source</td>
+                  <td>Heuristic</td>
+                  <td><span class="sev sev-medium">Medium</span></td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td><code>hipaa</code></td>
+                  <td>PHI routed to external LLM (OpenAI, Anthropic, etc.)</td>
+                  <td>Heuristic</td>
+                  <td><span class="sev sev-critical">Critical</span></td>
+                  <td>Commit</td>
+                </tr>
+                <tr>
+                  <td><code>hipaa</code></td>
+                  <td>PHI encryption, BAAs, audit trail, minimum necessary</td>
+                  <td>LLM rule</td>
+                  <td>Varies</td>
+                  <td>Per finding</td>
+                </tr>
+                <tr>
+                  <td><code>pci</code></td>
+                  <td>PAN, CVV, magnetic stripe / track data patterns</td>
+                  <td>Heuristic</td>
+                  <td><span class="sev sev-critical">Critical</span></td>
+                  <td>Commit</td>
+                </tr>
+                <tr>
+                  <td><code>pci</code></td>
+                  <td>No card data in URLs, logs, or shared credentials</td>
+                  <td>LLM rule</td>
+                  <td>Varies</td>
+                  <td>Per finding</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="pack-checks-note">Default thresholds: <code>block_commit_on: critical</code>, <code>block_push_on: high</code>. Sensitive pack findings stay local unless you set <code>sync_sensitive_findings: true</code>. These gates assist review — they are not a compliance certification.</p>
+        </div>
       </div>
     </section>
 
@@ -354,9 +452,22 @@
       <div class="container">
         <div class="section-header center reveal">
           <h2>How do I install ComplianceGate?</h2>
-          <p class="lead">Install script, manual pip, or clone into an existing repo. Hooks run on every commit and push.</p>
+          <p class="lead">npx, install script, or manual pip. Hooks run on every commit and push.</p>
         </div>
         <div class="install-grid">
+          <article class="install-card reveal">
+            <h3>npx install</h3>
+            <p>Recommended. Creates a venv, pip installs ComplianceGate, writes config, and installs hooks.</p>
+            <div class="install-row">
+              <code class="install-cmd" id="cmdNpx">npx compliancegate install</code>
+              <button class="copy-btn" type="button" data-copy="cmdNpx">Copy</button>
+            </div>
+            <div class="install-row">
+              <code class="install-cmd" id="cmdNpxCheck">npx compliancegate check</code>
+              <button class="copy-btn" type="button" data-copy="cmdNpxCheck">Copy</button>
+            </div>
+            <p class="install-card-note">Requires Node 18+ and Python 3.10+. Package scaffold — publish pending.</p>
+          </article>
           <article class="install-card reveal">
             <h3>Install script</h3>
             <p>Creates venv, copies config, installs hooks, sets storage mode.</p>

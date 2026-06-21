@@ -9,8 +9,16 @@ ComplianceGate records policy decisions, runs pre-commit/pre-push checks, and sa
 ## Install
 
 ```bash
+npx compliancegate install
+```
+
+Or clone and use the install script:
+
+```bash
 bash scripts/install.sh --repo /path/to/your/project --mode sqlite_markdown
 ```
+
+See [`npm/README.md`](npm/README.md) for the npx wrapper (scaffold — not yet on npm registry).
 
 ## CLI
 
