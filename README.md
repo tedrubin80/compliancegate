@@ -22,6 +22,7 @@ See [`npm/README.md`](npm/README.md) for the full npx command reference.
 
 ```bash
 npx compliancegate install
+npx compliancegate install --langchain
 npx compliancegate skills install --all-skills --all
 ```
 
@@ -109,6 +110,8 @@ Defaults when `provider: openrouter`: endpoint `https://openrouter.ai/api/v1/cha
 Two-stage review: **reasoning model** analyzes diffs against enabled rule packs, then **analytical model** produces structured findings JSON.
 
 ```bash
+npx compliancegate install --langchain
+# or after install:
 pip install 'compliancegate[langchain]'
 ```
 

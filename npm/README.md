@@ -31,6 +31,7 @@ With options:
 ```bash
 npx compliancegate install --mode sqlite_markdown --packs base,pii
 npx compliancegate install --repo . --mode markdown
+npx compliancegate install --langchain   # two-stage LLM review deps
 ```
 
 This also copies the **compliancegate** agent skill to `.cursor/skills/compliancegate/`.
@@ -82,7 +83,7 @@ llm:
   model: anthropic/claude-3.5-sonnet
 
 langchain:
-  enabled: true   # optional — pip install 'compliancegate[langchain]'
+  enabled: true   # use --langchain on install, or: pip install 'compliancegate[langchain]'
 ```
 
 ```bash

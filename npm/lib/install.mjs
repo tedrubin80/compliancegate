@@ -77,6 +77,15 @@ export function installComplianceGate(options = {}) {
     );
   }
 
+  if (options.langchain) {
+    console.log("==> Installing LangChain optional dependencies");
+    runCommand(
+      pipPython,
+      ["-m", "pip", "install", "-q", `${source}[langchain]`],
+      { cwd: repo, quiet: true },
+    );
+  }
+
   const cg = cgBinary(repo);
   console.log("\n==> Initializing project");
   runCommand(cg, ["init", "--repo", repo, "--mode", mode], { cwd: repo });

@@ -25,6 +25,7 @@ compliancegate — npx installer for the Python governance gate (compliancegate.
 Install into a git repo (creates .venv, pip install, init, hooks):
   npx compliancegate install
   npx compliancegate install --repo /path/to/project --mode sqlite_markdown --packs base,pii
+  npx compliancegate install --langchain
 
 Verify an install:
   npx compliancegate check
@@ -47,6 +48,7 @@ Options for install:
   --mode MODE       sqlite | markdown | remote | sqlite_markdown | all
   --packs LIST      Comma-separated rule packs (default: base)
   --source SPEC     pip install source (default: GitHub main)
+  --langchain       Also pip install compliancegate[langchain] for two-stage LLM review
   --no-venv         Install with system python3 instead of .venv
 
 Environment:
@@ -61,6 +63,7 @@ function runInstall() {
     packs: flagValue("--packs"),
     source: flagValue("--source"),
     venv: !hasFlag("--no-venv"),
+    langchain: hasFlag("--langchain"),
   });
 }
 

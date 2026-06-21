@@ -6,6 +6,7 @@ HARNESS_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 REPO="."
 MODE="sqlite_markdown"
 VENV=1
+LANGCHAIN=0
 RULE_PACKS="base"
 
 usage() {
@@ -18,6 +19,7 @@ Options:
   --repo PATH          Target git repo (default: current directory)
   --mode MODE          Storage mode (default: sqlite_markdown)
   --packs LIST         Comma-separated rule packs (default: base)
+  --langchain          Also install compliancegate[langchain] for two-stage LLM review
   --no-venv            Skip creating .venv in target repo
   -h, --help           Show this help
 EOF
@@ -28,6 +30,7 @@ while [[ $# -gt 0 ]]; do
     --repo) REPO="$2"; shift 2 ;;
     --mode) MODE="$2"; shift 2 ;;
     --packs) RULE_PACKS="$2"; shift 2 ;;
+    --langchain) LANGCHAIN=1; shift ;;
     --no-venv) VENV=0; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1"; usage; exit 1 ;;
@@ -57,8 +60,14 @@ if [[ "$VENV" -eq 1 ]]; then
   if [[ "$MODE" == "remote" || "$MODE" == "all" ]]; then
     pip install -q -e "$HARNESS_ROOT[postgres,mysql]" 2>/dev/null || true
   fi
+  if [[ "$LANGCHAIN" -eq 1 ]]; then
+    pip install -q -e "$HARNESS_ROOT[langchain]"
+  fi
 else
   pip install -q -e "$HARNESS_ROOT"
+  if [[ "$LANGCHAIN" -eq 1 ]]; then
+    pip install -q -e "$HARNESS_ROOT[langchain]"
+  fi
 fi
 
 CG_CMD="compliancegate"

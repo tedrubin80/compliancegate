@@ -1,6 +1,6 @@
 {
   "name": "compliancegate",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Governance gap layer for AI-assisted code — pre-commit and pre-push compliance gates with local audit retention.",
   "type": "module",
   "bin": {
