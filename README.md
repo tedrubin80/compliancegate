@@ -150,7 +150,8 @@ Emergency bypass: `CG_SKIP=1 git commit`
 ## Links
 
 - **Site:** [compliancegate.dev](https://compliancegate.dev)
-- **Repo:** [github.com/tedrubin80/compliancegate](https://github.com/tedrubin80/compliancegate)
+- **App repo:** [github.com/tedrubin80/compliancegate](https://github.com/tedrubin80/compliancegate)
+- **Site repo:** [github.com/tedrubin80/compliancegatesite](https://github.com/tedrubin80/compliancegatesite)
 
 ## License
 
